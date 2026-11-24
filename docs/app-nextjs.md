@@ -98,6 +98,6 @@ Configuração necessária no Supabase:
 | `/aluno/frequencia/novo` | aluno | Novo check-in: atividade (Aula/Play de Beach Tênis, Vôlei, Futvôlei), foto, data, tempo, distância, calorias, passos e observação. Vários por dia. |
 | `/admin/alunos/[id]/frequencia` | admin, recepção | Mesmo calendário, só leitura (botão na ficha do aluno). |
 
-- Tabela `beach.atividades` + view `beach.vw_frequencia_resumo` (migration `20261124234000_beach_frequencia`). RLS: aluno lê/cria/edita/apaga só as próprias; staff lê todas; professor não vê.
+- Tabela `beach.atividades` + view `beach.vw_frequencia_resumo` (migration `20261124234031_beach_frequencia`). RLS: aluno lê/cria/edita/apaga só as próprias; staff lê todas; professor não vê.
 - Fotos no bucket privado `beach-atividades` do Storage, caminho `<aluno_id>/<uuid>.jpg`. O navegador reduz a foto (máx. 1280 px, JPEG) e envia direto ao Storage; a Server Action recebe só o caminho. As páginas exibem com URL assinada de 1 h.
 - Código: `src/lib/frequencia*.ts`, `src/components/frequencia/`.
