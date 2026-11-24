@@ -74,3 +74,18 @@ Configuração necessária no Supabase:
   (ou `https://<seu-domínio>/auth/**`, que cobre também o `/auth/callback`).
 - O SMTP padrão do Supabase tem limite baixo de envios por hora e é feito para testes. Para alunos reais,
   configure um SMTP próprio em **Authentication > Emails > SMTP Settings** (ex.: Resend ou Brevo, que têm plano grátis).
+
+## Agenda de aulas e turmas
+
+| Quem | Rotas | O que faz |
+| --- | --- | --- |
+| Admin/recepção | `/admin/agenda` | Semana de aulas, botão "Gerar aulas" (chama `beach.gerar_aulas`), detalhe da aula em `/admin/agenda/aulas/[id]` com chamada, cancelamento, professor substituto, troca de quadra e reposição/avulso |
+| Admin/recepção | `/admin/turmas`, `/admin/turmas/nova`, `/admin/turmas/[id]` | Turmas (horário semanal fixo) com ocupação de vagas, alunos e próximas aulas |
+| Admin/recepção | `/admin/quadras`, `/admin/equipe` | Cadastro de quadras e mudança de papel (aluno → professor/recepção/admin) |
+| Professor | `/professor`, `/professor/turmas`, `/professor/aulas/[id]` | Aulas de hoje e dos próximos 7 dias, turmas com alunos, chamada |
+| Aluno | `/aluno`, `/aluno/agenda` | Próximas aulas, horários fixos e frequência |
+
+- Fluxo: cadastre quadras → promova professores em Equipe → crie turmas → gere as aulas (idempotente) → matricule alunos → chamada.
+- O professor não lê `beach.matriculas` pelo RLS, por isso a lista de alunos e a chamada usam as RPCs
+  `beach.alunos_da_turma`, `beach.lista_chamada` e `beach.turmas_ocupacao` (migration `20261124220915_beach_agenda_rpcs`).
+- Datas no fuso `America/Sao_Paulo` (`src/lib/agenda/datas.ts`). Consultas em `src/lib/agenda/consultas.ts`.

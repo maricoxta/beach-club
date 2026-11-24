@@ -9,7 +9,8 @@ export default async function Layout({ children }: LayoutProps<"/aluno">) {
   return (
     <AreaShell perfil={perfil} menu={[
         { href: "/aluno", rotulo: "Início" },
-        { rotulo: "Minhas aulas" },
+        { href: "/aluno/agenda", rotulo: "Minha agenda" },
+        { href: "/aluno/frequencia", rotulo: "Frequência" },
         { href: "/aluno/plano", rotulo: "Plano e pagamentos" },
       ]}>
       {children}
