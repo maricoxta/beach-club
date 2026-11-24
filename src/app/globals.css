@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+/* Identidade Maré: areia, mar, coral do pôr do sol e sol de meio-dia. */
+:root {
+  --areia-50: #fffaf2;
+  --areia-100: #f8eedd;
+  --areia-200: #efdcbc;
+  --mar-500: #0e8a8f;
+  --mar-600: #0b7278;
+  --mar-900: #0a3540;
+  --coral-500: #ff6a4d;
+  --coral-600: #e9533a;
+  --sol-400: #ffc23d;
+  --tinta: #12303a;
+  --tinta-suave: #4b6770;
+  --background: var(--areia-50);
+  --foreground: var(--tinta);
+}
+
+@theme inline {
+  --color-areia-50: var(--areia-50);
+  --color-areia-100: var(--areia-100);
+  --color-areia-200: var(--areia-200);
+  --color-mar-500: var(--mar-500);
+  --color-mar-600: var(--mar-600);
+  --color-mar-900: var(--mar-900);
+  --color-coral-500: var(--coral-500);
+  --color-coral-600: var(--coral-600);
+  --color-sol-400: var(--sol-400);
+  --color-tinta: var(--tinta);
+  --color-tinta-suave: var(--tinta-suave);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-corpo);
+  --font-display: var(--font-titulo);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Faixa de ondas reutilizável */
+.ondas {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 12'%3E%3Cpath d='M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 V12 H0Z' fill='%23f8eedd'/%3E%3C/svg%3E");
+  background-size: 120px 12px;
+  background-repeat: repeat-x;
+}
