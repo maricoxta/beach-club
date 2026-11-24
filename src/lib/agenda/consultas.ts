@@ -113,3 +113,13 @@ export async function turmasDoAluno(alunoId: string) {
   }
   return [...ids];
 }
+
+export async function vagasLivresAula(aulaId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("vagas_livres_aula", { p_aula: aulaId });
+  if (error) {
+    console.error("[agenda] vagas_livres_aula:", error.code, error.message);
+    return null;
+  }
+  return data as number | null;
+}

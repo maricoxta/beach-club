@@ -52,6 +52,9 @@ export function FormChamada({
             <div>
               <p className="font-semibold text-tinta">{item.nome}</p>
               {!item.matriculado && <p className="text-xs font-semibold text-sol-500">Reposição / avulso</p>}
+              {item.observacao === "Desmarcada pelo aluno" && (
+                <p className="text-xs font-semibold text-sol-500">Desmarcou pelo app</p>
+              )}
             </div>
             <fieldset className="flex flex-wrap gap-1.5">
               <legend className="sr-only">Presença de {item.nome}</legend>

@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { CartaoAula } from "@/components/agenda/cartao-aula";
 import { Cabecalho, Cartao, Etiqueta, Vazio } from "@/components/agenda/ui";
 import { listarAulas, listarTurmas, turmasDoAluno } from "@/lib/agenda/consultas";
-import { DIAS_SEMANA, diaSemanaIso, faixaHorario, formatarData, hoje, somarDias } from "@/lib/agenda/datas";
+import { agora, DIAS_SEMANA, diaSemanaIso, faixaHorario, formatarData, formatarHora, HORAS_ANTECEDENCIA_DESMARCAR, hoje, horaMenos, prazoDesmarcar, somarDias } from "@/lib/agenda/datas";
 import { rotuloPresenca, type StatusPresenca } from "@/lib/agenda/tipos";
 import { getSessao } from "@/lib/sessao";
+import { BotaoDesmarcar } from "./botao-desmarcar";
 import { createClient } from "@/lib/supabase/server";
 
 export const instant = false;
@@ -43,6 +44,13 @@ export default async function MinhaAgendaPage() {
     (b.aula?.data ?? "").localeCompare(a.aula?.data ?? ""),
   );
   const presentes = presencas.filter((p) => p.status === "presente").length;
+
+  // Minhas marcações nas próximas aulas (desmarcadas por mim ficam como falta justificada).
+  const { data: futuras } = aulas.length
+    ? await supabase.from("presencas").select("aula_id, status, observacao").eq("aluno_id", perfil.id).in("aula_id", aulas.map((a) => a.id))
+    : { data: [] };
+  const marcacao = new Map(((futuras ?? []) as { aula_id: string; status: string; observacao: string | null }[]).map((p) => [p.aula_id, p]));
+  const instante = agora();
 
   return (
     <>
@@ -86,10 +94,36 @@ export default async function MinhaAgendaPage() {
                     {a.data === dia ? "Hoje" : `${DIAS_SEMANA[diaSemanaIso(a.data)].curto} ${formatarData(a.data)}`}
                   </p>
                   <CartaoAula aula={a} />
+                  {(() => {
+                    const m = marcacao.get(a.id);
+                    const desmarcada = m?.observacao === "Desmarcada pelo aluno";
+                    const prazo = prazoDesmarcar(a.data, a.turma?.hora_inicio ?? "00:00:00");
+                    const podeMexer = a.status === "agendada" && prazo.getTime() > instante && (!m || desmarcada);
+                    return (
+                      <div className="mt-2 flex flex-col gap-1">
+                        {desmarcada && (
+                          <p className="rounded-2xl bg-sol-400/20 px-3 py-1.5 text-center text-xs font-bold text-verde-900">
+                            Você desmarcou esta aula
+                          </p>
+                        )}
+                        {podeMexer && (
+                          <BotaoDesmarcar
+                            aulaId={a.id}
+                            desmarcada={desmarcada}
+                            prazo={`${formatarData(a.data)} às ${formatarHora(horaMenos(a.turma?.hora_inicio ?? "00:00:00", HORAS_ANTECEDENCIA_DESMARCAR))}`}
+                          />
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
             </div>
           )}
+          <p className="mt-3 text-xs text-tinta-suave">
+            Não vai conseguir ir? Desmarque até 2 horas antes do início. A vaga fica livre para reposição de outro aluno e
+            conta como falta justificada.
+          </p>
         </section>
 
         <aside>
