@@ -17,6 +17,9 @@ export function NavegarSemana({ segunda, base, hoje }: { segunda: string; base: 
       <Link className={classeBotaoSecundario} href={`${base}?semana=${somarDias(segunda, 7)}`} aria-label="Próxima semana">
         →
       </Link>
+      <Link className={classeBotaoSecundario} href={`/admin/calendario?mes=${segunda.slice(0, 7)}`} title="Escolher semana no calendário">
+        Calendário
+      </Link>
       {segunda !== atual && (
         <Link className={classeBotaoSecundario} href={base}>
           Hoje
