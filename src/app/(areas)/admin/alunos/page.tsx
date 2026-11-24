@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Selo, Vazio, classeBotao, classeCampo } from "@/components/ui";
+import { rotuloPapel, type Papel } from "@/lib/papel";
 import { createClient } from "@/lib/supabase/server";
 
 export const instant = false;
@@ -56,6 +57,18 @@ export default async function AlunosPage({ searchParams }: PageProps<"/admin/alu
   let alunos = (perfis ?? []) as Aluno[];
   if (filtro === "sem_plano") alunos = alunos.filter((a) => !porAluno.get(a.id)?.some((m) => m.status === "ativa"));
 
+  // Busca sem resultado: avisa se o nome é de alguém da equipe (cada conta tem um papel só).
+  let equipe: { nome: string; papel: Papel }[] = [];
+  if (alunos.length === 0 && termo) {
+    const { data } = await supabase
+      .from("perfis")
+      .select("nome, papel")
+      .neq("papel", "aluno")
+      .or(`nome.ilike.%${termo}%,email.ilike.%${termo}%`)
+      .limit(5);
+    equipe = (data ?? []) as typeof equipe;
+  }
+
   return (
     <>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -92,6 +105,13 @@ export default async function AlunosPage({ searchParams }: PageProps<"/admin/alu
           {busca || filtro !== "ativos"
             ? "Nenhum aluno encontrado com esses filtros."
             : "Nenhum aluno cadastrado ainda. Alunos que criam conta pelo site aparecem aqui automaticamente."}
+          {equipe.length > 0 && (
+            <span className="mt-2 block">
+              {equipe.map((p) => `${p.nome} (${rotuloPapel[p.papel]})`).join(", ")}{" "}
+              {equipe.length === 1 ? "é da equipe" : "são da equipe"} e não aparece aqui: cada conta tem um papel só.
+              Para alguém da equipe fazer aula, cadastre uma conta de aluno com outro e-mail.
+            </span>
+          )}
         </Vazio>
       ) : (
         <div className="overflow-x-auto rounded-3xl border border-areia-200 bg-white shadow-sm">
