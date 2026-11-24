@@ -7,11 +7,11 @@ O schema `public` (que tem tabelas de outros projetos) não é tocado.
 
 | Arquivo | O que faz |
 |---|---|
-| `20261124200000_beach_schema_base.sql` | schema, enums, `perfis`, `modalidades`, `niveis`, `quadras`, `planos` |
-| `20261124200100_beach_turmas_aulas.sql` | helpers de papel, `turmas`, `aulas`, `matriculas`, `matricula_turmas`, `presencas`, `gerar_aulas()` |
-| `20261124200200_beach_financeiro.sql` | `mensalidades`, `pagamentos`, `locacoes`, `gerar_mensalidades()`, views de relatório |
-| `20261124200300_beach_rls.sql` | trigger de signup, proteção de papel, grants e políticas RLS |
-| `20261124200400_beach_dados_iniciais.sql` | modalidades e níveis iniciais |
+| `20261124203125_beach_schema_base.sql` | schema, enums, `perfis`, `modalidades`, `niveis`, `quadras`, `planos` |
+| `20261124203203_beach_turmas_aulas.sql` | helpers de papel, `turmas`, `aulas`, `matriculas`, `matricula_turmas`, `presencas`, `gerar_aulas()` |
+| `20261124203240_beach_financeiro.sql` | `mensalidades`, `pagamentos`, `locacoes`, `gerar_mensalidades()`, views de relatório |
+| `20261124203321_beach_rls.sql` | trigger de signup, proteção de papel, grants e políticas RLS |
+| `20261124203329_beach_dados_iniciais.sql` | modalidades e níveis iniciais |
 
 ## Modelo
 
@@ -66,6 +66,10 @@ pela administração. O primeiro admin é promovido pelo SQL Editor:
 ```sql
 update beach.perfis set papel = 'admin' where email = 'voce@exemplo.com';
 ```
+
+## Status
+
+Aplicadas no projeto `lplvhzuaineeqvzszgjd` em 24/11/2026. Os nomes dos arquivos usam as mesmas versões registradas em `supabase_migrations.schema_migrations`, então `supabase db push` não tenta reaplicar.
 
 ## Depois de aplicar
 
