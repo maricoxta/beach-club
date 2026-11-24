@@ -18,11 +18,13 @@ export const getSessao = cache(async () => {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { user: null, perfil: null } as const;
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("perfis")
     .select("id, nome, email, papel, ativo")
     .eq("id", auth.user.id)
     .maybeSingle();
+  // 406/PGRST106 aqui quase sempre significa schema "beach" fora de Data API > Exposed schemas.
+  if (error) console.error("[sessao] falha ao ler beach.perfis:", error.code, error.message);
 
   const perfil = data && isPapel(data.papel) ? (data as Perfil) : null;
   return { user: auth.user, perfil } as const;
