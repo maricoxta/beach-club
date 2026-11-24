@@ -47,6 +47,34 @@ verde do coqueiro `#2E6B3A`, amarelo do sol `#F7B731` e areia `#E0C596`/`#ECDCBD
 Tokens em `src/app/globals.css`. Tipografia: Outfit (títulos) e Plus Jakarta Sans (texto).
 Nome: Cristal Beach Club. Para trocar, edite em `src/lib/marca.ts` ou pela env `NEXT_PUBLIC_CLUB_NOME`.
 
+## Módulo alunos, planos e matrículas
+
+| Rota | Quem | O que faz |
+| --- | --- | --- |
+| `/admin/alunos` | admin, recepção | Lista e busca alunos, com plano e turmas escolhidas (`2 de 3 · falta escolher`). |
+| `/admin/alunos/novo` | admin, recepção | Cadastra aluno e envia link de acesso por e-mail. |
+| `/admin/alunos/[id]` | admin, recepção | Dados do aluno, matrículas (criar, pausar, reativar, cancelar, valor/vencimento) e turmas da matrícula. |
+| `/admin/alunos/planos` | admin, recepção | Planos (1x/2x/3x por semana, valor, modalidade, ativo). |
+| `/aluno/plano` | aluno | Plano atual, valor, vencimento e horários fixos das turmas. |
+
+Regras que ficam no banco (os triggers devolvem a mensagem e o app só repassa):
+vaga na turma, limite de turmas pelo plano (`aulas_por_semana`), só matrícula ativa recebe turma,
+valor da matrícula copiado do plano quando vem em branco. No app: não deixa duas matrículas ativas no
+mesmo plano para o mesmo aluno, e confere vaga antes de reativar uma matrícula pausada.
+
+### Cadastro de aluno pela recepção
+
+Sem service role no app, a recepção cria a conta com `signInWithOtp` (magic link) num client sem sessão
+(`src/lib/convite.ts`), mandando `data.app = 'beach-club'` para o trigger criar o perfil. O link volta para
+`/auth/acesso`, que guarda a sessão e pede uma senha. O mesmo link serve como "esqueci minha senha"
+(botão **Enviar link de acesso** na ficha do aluno).
+
+Configuração necessária no Supabase:
+- **Authentication > URL Configuration > Redirect URLs**: incluir `https://<seu-domínio>/auth/acesso`
+  (ou `https://<seu-domínio>/auth/**`, que cobre também o `/auth/callback`).
+- O SMTP padrão do Supabase tem limite baixo de envios por hora e é feito para testes. Para alunos reais,
+  configure um SMTP próprio em **Authentication > Emails > SMTP Settings** (ex.: Resend ou Brevo, que têm plano grátis).
+
 ## Agenda de aulas e turmas
 
 | Quem | Rotas | O que faz |
@@ -61,3 +89,15 @@ Nome: Cristal Beach Club. Para trocar, edite em `src/lib/marca.ts` ou pela env `
 - O professor não lê `beach.matriculas` pelo RLS, por isso a lista de alunos e a chamada usam as RPCs
   `beach.alunos_da_turma`, `beach.lista_chamada` e `beach.turmas_ocupacao` (migration `20261124220915_beach_agenda_rpcs`).
 - Datas no fuso `America/Sao_Paulo` (`src/lib/agenda/datas.ts`). Consultas em `src/lib/agenda/consultas.ts`.
+
+## Calendário de frequência do aluno
+
+| Rota | Quem | O que faz |
+| --- | --- | --- |
+| `/aluno/frequencia` | aluno | Totais (check-ins, dias ativos, tempo total), calendário do mês com foto/ícone em cada dia, totais do mês e detalhe do dia (`?mes=AAAA-MM&dia=AAAA-MM-DD`). |
+| `/aluno/frequencia/novo` | aluno | Novo check-in: atividade (Aula/Play de Beach Tênis, Vôlei, Futvôlei), foto, data, tempo, distância, calorias, passos e observação. Vários por dia. |
+| `/admin/alunos/[id]/frequencia` | admin, recepção | Mesmo calendário, só leitura (botão na ficha do aluno). |
+
+- Tabela `beach.atividades` + view `beach.vw_frequencia_resumo` (migration `20261124234031_beach_frequencia`). RLS: aluno lê/cria/edita/apaga só as próprias; staff lê todas; professor não vê.
+- Fotos no bucket privado `beach-atividades` do Storage, caminho `<aluno_id>/<uuid>.jpg`. O navegador reduz a foto (máx. 1280 px, JPEG) e envia direto ao Storage; a Server Action recebe só o caminho. As páginas exibem com URL assinada de 1 h.
+- Código: `src/lib/frequencia*.ts`, `src/components/frequencia/`.

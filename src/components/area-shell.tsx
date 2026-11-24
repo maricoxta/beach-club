@@ -3,8 +3,9 @@ import { Logo } from "@/components/logo";
 import { rotuloPapel } from "@/lib/papel";
 import type { Perfil } from "@/lib/sessao";
 
-// Itens sem href são módulos ainda não implementados.
-export type ItemMenu = { rotulo: string; href?: string };
+import { MenuArea, type ItemMenu } from "@/components/menu-area";
+
+export type { ItemMenu };
 
 export function AreaShell({
   perfil,
@@ -44,27 +45,7 @@ export function AreaShell({
             </form>
           </div>
         </div>
-        <nav className="mx-auto flex w-full max-w-6xl gap-1 overflow-x-auto px-4 pb-4 sm:px-6">
-          {menu.map((item) =>
-            item.href ? (
-              <Link
-                key={item.rotulo}
-                href={item.href}
-                className="whitespace-nowrap rounded-full bg-verde-700 px-4 py-1.5 text-sm font-semibold text-white"
-              >
-                {item.rotulo}
-              </Link>
-            ) : (
-              <span
-                key={item.rotulo}
-                title="Em breve"
-                className="cursor-default whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-tinta-suave/50"
-              >
-                {item.rotulo}
-              </span>
-            ),
-          )}
-        </nav>
+        <MenuArea menu={menu} />
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">{children}</main>
     </div>
@@ -75,13 +56,15 @@ export function CartaoModulo({
   titulo,
   descricao,
   destaque,
+  href,
 }: {
   titulo: string;
   descricao: string;
   destaque?: string;
+  href?: string;
 }) {
-  return (
-    <div className="flex flex-col gap-2 rounded-3xl border border-areia-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-verde-600">
+  const conteudo = (
+    <div className="flex h-full flex-col gap-2 rounded-3xl border border-areia-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-verde-600">
       {destaque && (
         <span className="w-fit rounded-full bg-sol-400/25 px-3 py-0.5 text-xs font-bold text-verde-900">
           {destaque}
@@ -91,6 +74,7 @@ export function CartaoModulo({
       <p className="text-sm text-tinta-suave">{descricao}</p>
     </div>
   );
+  return href ? <Link href={href}>{conteudo}</Link> : conteudo;
 }
 
 export function TituloArea({ ola, subtitulo }: { ola: string; subtitulo: string }) {
