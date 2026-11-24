@@ -117,6 +117,9 @@ export default async function AlunoPage({ params, searchParams }: PageProps<"/ad
       <div className="mb-6 mt-3 flex flex-wrap items-center gap-3">
         <h1 className="font-display text-3xl font-semibold text-verde-900">{aluno.nome}</h1>
         {!aluno.ativo && <Selo cor="cinza">Inativo</Selo>}
+        <Link href={`/admin/alunos/${aluno.id}/frequencia`} className={`${classeBotaoSecundario} ml-auto`}>
+          Calendário de frequência
+        </Link>
       </div>
       {novo && (
         <div className="mb-6">

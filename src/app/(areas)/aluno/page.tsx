@@ -55,13 +55,15 @@ export default async function AlunoPage() {
         )}
       </section>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Link href="/aluno/agenda">
-          <CartaoModulo titulo="Minha agenda" descricao="Seus horários fixos, próximas aulas e frequência." />
-        </Link>
-        <Link href="/aluno/plano">
-          <CartaoModulo titulo="Plano e pagamentos" descricao="Frequência contratada, matrícula e mensalidades." />
-        </Link>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <CartaoModulo
+          href="/aluno/frequencia"
+          titulo="Calendário de frequência"
+          descricao="Registre seus treinos com foto, tempo, distância, calorias e passos."
+          destaque="Novo"
+        />
+        <CartaoModulo href="/aluno/agenda" titulo="Minha agenda" descricao="Seus horários fixos, próximas aulas e presenças." />
+        <CartaoModulo href="/aluno/plano" titulo="Plano e pagamentos" descricao="Seu plano, horários e mensalidades." />
       </div>
     </>
   );

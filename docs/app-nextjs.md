@@ -89,3 +89,15 @@ Configuração necessária no Supabase:
 - O professor não lê `beach.matriculas` pelo RLS, por isso a lista de alunos e a chamada usam as RPCs
   `beach.alunos_da_turma`, `beach.lista_chamada` e `beach.turmas_ocupacao` (migration `20261124220915_beach_agenda_rpcs`).
 - Datas no fuso `America/Sao_Paulo` (`src/lib/agenda/datas.ts`). Consultas em `src/lib/agenda/consultas.ts`.
+
+## Calendário de frequência do aluno
+
+| Rota | Quem | O que faz |
+| --- | --- | --- |
+| `/aluno/frequencia` | aluno | Totais (check-ins, dias ativos, tempo total), calendário do mês com foto/ícone em cada dia, totais do mês e detalhe do dia (`?mes=AAAA-MM&dia=AAAA-MM-DD`). |
+| `/aluno/frequencia/novo` | aluno | Novo check-in: atividade (Aula/Play de Beach Tênis, Vôlei, Futvôlei), foto, data, tempo, distância, calorias, passos e observação. Vários por dia. |
+| `/admin/alunos/[id]/frequencia` | admin, recepção | Mesmo calendário, só leitura (botão na ficha do aluno). |
+
+- Tabela `beach.atividades` + view `beach.vw_frequencia_resumo` (migration `20261124234000_beach_frequencia`). RLS: aluno lê/cria/edita/apaga só as próprias; staff lê todas; professor não vê.
+- Fotos no bucket privado `beach-atividades` do Storage, caminho `<aluno_id>/<uuid>.jpg`. O navegador reduz a foto (máx. 1280 px, JPEG) e envia direto ao Storage; a Server Action recebe só o caminho. As páginas exibem com URL assinada de 1 h.
+- Código: `src/lib/frequencia*.ts`, `src/components/frequencia/`.

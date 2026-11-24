@@ -8,6 +8,6 @@ psql -U postgres -qc "drop database if exists $DB" -c "create database $DB"
 psql -U postgres -d $DB -q -v ON_ERROR_STOP=1 -f 00_stub_supabase.sql
 for f in ../migrations/*.sql; do echo "== $f"; psql -U postgres -d $DB -q -1 -v ON_ERROR_STOP=1 -f "$f"; done
 psql -U postgres -d $DB -q -v ON_ERROR_STOP=1 -f 01_seed_teste.sql
-psql -U authenticator -d $DB -f 02_rls_regras.sql | tee /tmp/beach_rls.out
+for t in 0[2-9]_*.sql; do psql -U authenticator -d $DB -f "$t"; done | tee /tmp/beach_rls.out
 if grep -q "FALHOU" /tmp/beach_rls.out; then echo "Há testes falhando"; exit 1; fi
 echo "Tudo certo."
