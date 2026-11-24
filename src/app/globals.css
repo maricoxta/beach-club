@@ -1,19 +1,24 @@
 @import "tailwindcss";
 
-/* Identidade Maré: areia, mar, coral do pôr do sol e sol de meio-dia. */
+/* Identidade tirada do logo: coqueiro verde, sol amarelo e areia dourada sobre branco. */
 :root {
-  --areia-50: #fffaf2;
-  --areia-100: #f8eedd;
-  --areia-200: #efdcbc;
-  --mar-500: #0e8a8f;
-  --mar-600: #0b7278;
-  --mar-900: #0a3540;
-  --coral-500: #ff6a4d;
-  --coral-600: #e9533a;
-  --sol-400: #ffc23d;
-  --tinta: #12303a;
-  --tinta-suave: #4b6770;
-  --background: var(--areia-50);
+  --branco: #ffffff;
+  --areia-50: #fcf8f1;
+  --areia-100: #f6ecdb;
+  --areia-200: #ecdcbd;
+  --areia-300: #e0c596;
+  --areia-500: #c9a066;
+  --verde-50: #edf4ee;
+  --verde-600: #3a7d47;
+  --verde-700: #2e6b3a;
+  --verde-800: #24552e;
+  --verde-900: #1a3f22;
+  --sol-400: #f7b731;
+  --sol-500: #e9a215;
+  --tinta: #1e2b22;
+  --tinta-suave: #5d6b61;
+  --erro: #b4432c;
+  --background: var(--branco);
   --foreground: var(--tinta);
 }
 
@@ -21,14 +26,18 @@
   --color-areia-50: var(--areia-50);
   --color-areia-100: var(--areia-100);
   --color-areia-200: var(--areia-200);
-  --color-mar-500: var(--mar-500);
-  --color-mar-600: var(--mar-600);
-  --color-mar-900: var(--mar-900);
-  --color-coral-500: var(--coral-500);
-  --color-coral-600: var(--coral-600);
+  --color-areia-300: var(--areia-300);
+  --color-areia-500: var(--areia-500);
+  --color-verde-50: var(--verde-50);
+  --color-verde-600: var(--verde-600);
+  --color-verde-700: var(--verde-700);
+  --color-verde-800: var(--verde-800);
+  --color-verde-900: var(--verde-900);
   --color-sol-400: var(--sol-400);
+  --color-sol-500: var(--sol-500);
   --color-tinta: var(--tinta);
   --color-tinta-suave: var(--tinta-suave);
+  --color-erro: var(--erro);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-corpo);
@@ -40,9 +49,9 @@ body {
   color: var(--foreground);
 }
 
-/* Faixa de ondas reutilizável */
-.ondas {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 12'%3E%3Cpath d='M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 V12 H0Z' fill='%23f8eedd'/%3E%3C/svg%3E");
-  background-size: 120px 12px;
-  background-repeat: repeat-x;
+/* Duna de areia: a curva da base do logo, usada como divisor de seções. */
+.duna {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop offset='0' stop-color='%23ecdcbd'/%3E%3Cstop offset='1' stop-color='%23e0c596'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 C 360 0, 760 130, 1100 50 S 1440 40, 1440 40 V120 H0Z' fill='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }

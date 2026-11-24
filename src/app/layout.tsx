@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
+import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import { marca } from "@/lib/marca";
 import "./globals.css";
 
-const titulo = Bricolage_Grotesque({ variable: "--font-titulo", subsets: ["latin"] });
+const titulo = Outfit({ variable: "--font-titulo", subsets: ["latin"] });
 const corpo = Plus_Jakarta_Sans({ variable: "--font-corpo", subsets: ["latin"] });
 
 export const metadata: Metadata = {

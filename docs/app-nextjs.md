@@ -42,5 +42,7 @@ npm run dev                  # http://localhost:3000
 
 ## Marca
 
-Nome provisório **Maré Beach Club**, definido em `src/lib/marca.ts` (ou pela env `NEXT_PUBLIC_CLUB_NOME`).
-Paleta em `src/app/globals.css`: areia, mar, coral e sol. Tipografia: Bricolage Grotesque (títulos) e Plus Jakarta Sans (texto).
+Identidade derivada do logo (`public/logo.png`, também usado como favicon em `src/app/icon.png`):
+verde do coqueiro `#2E6B3A`, amarelo do sol `#F7B731` e areia `#E0C596`/`#ECDCBD` sobre fundo branco.
+Tokens em `src/app/globals.css`. Tipografia: Outfit (títulos) e Plus Jakarta Sans (texto).
+Nome: Cristal Beach Club. Para trocar, edite em `src/lib/marca.ts` ou pela env `NEXT_PUBLIC_CLUB_NOME`.

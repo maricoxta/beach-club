@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/logo";
@@ -18,16 +19,18 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const cadastro = modo === "cadastro";
 
   return (
-    <main className="grid flex-1 lg:grid-cols-2">
-      <aside className="relative hidden overflow-hidden bg-mar-900 p-10 text-areia-50 lg:flex lg:flex-col lg:justify-between">
-        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-sol-400" />
-        <div className="absolute right-40 top-64 h-24 w-24 rounded-full bg-coral-500" />
-        <Link href="/" className="relative">
-          <Logo claro />
+    <main className="grid flex-1 bg-white lg:grid-cols-2">
+      <aside className="relative hidden overflow-hidden bg-areia-50 p-10 lg:flex lg:flex-col lg:justify-between">
+        <Link href="/" className="relative z-10">
+          <Logo />
         </Link>
-        <blockquote className="relative max-w-md font-display text-4xl font-extrabold leading-tight">
+        <div className="relative z-10 mx-auto aspect-square w-72">
+          <Image src="/logo.png" alt="" fill sizes="288px" className="object-contain" priority />
+        </div>
+        <blockquote className="relative z-10 max-w-md pb-6 font-display text-4xl font-semibold leading-tight text-verde-900">
           Bola no alto, pé na areia e a agenda em dia.
         </blockquote>
+        <div className="duna absolute bottom-0 left-0 h-28 w-full" />
       </aside>
 
       <section className="flex flex-col items-center justify-center px-4 py-12 sm:px-6">
@@ -35,7 +38,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           <Link href="/" className="mb-10 inline-block lg:hidden">
             <Logo />
           </Link>
-          <h1 className="font-display text-3xl font-extrabold text-mar-900">
+          <h1 className="font-display text-3xl font-semibold text-verde-900">
             {cadastro ? "Crie sua conta" : "Bem-vindo de volta"}
           </h1>
           <p className="mb-8 mt-2 text-tinta-suave">
@@ -44,7 +47,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
               : "Entre para ver sua área no clube."}
           </p>
           {erro === "link" && (
-            <p className="mb-4 rounded-2xl bg-coral-500/10 px-4 py-3 text-sm font-semibold text-coral-600">
+            <p className="mb-4 rounded-2xl bg-erro/10 px-4 py-3 text-sm font-semibold text-erro">
               O link de confirmação expirou ou é inválido. Tente entrar ou peça um novo cadastro.
             </p>
           )}
