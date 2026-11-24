@@ -4,6 +4,7 @@ export type Plano = {
   id: string;
   nome: string;
   aulas_por_semana: number;
+  aulas_extras_semana: number;
   valor_mensal: number;
   modalidade_id: string | null;
   ativo: boolean;
@@ -23,6 +24,15 @@ export function CamposPlano({ plano, modalidades }: { plano?: Plano; modalidades
           {[1, 2, 3, 4, 5].map((n) => (
             <option key={n} value={n}>
               {n}x por semana
+            </option>
+          ))}
+        </select>
+      </Campo>
+      <Campo rotulo="Aulas extras por semana" dica="Aulas avulsas que o aluno pode reservar em vagas livres de outras turmas.">
+        <select name="aulas_extras_semana" defaultValue={plano?.aulas_extras_semana ?? 0} className={classeCampo}>
+          {[0, 1, 2, 3].map((n) => (
+            <option key={n} value={n}>
+              {n === 0 ? "Nenhuma" : `${n} por semana`}
             </option>
           ))}
         </select>

@@ -15,7 +15,7 @@ export default async function PlanosPage() {
   const [{ data: planos }, { data: modalidades }, { data: matriculas }] = await Promise.all([
     supabase
       .from("planos")
-      .select("id, nome, aulas_por_semana, valor_mensal, modalidade_id, ativo")
+      .select("id, nome, aulas_por_semana, aulas_extras_semana, valor_mensal, modalidade_id, ativo")
       .order("ativo", { ascending: false })
       .order("aulas_por_semana")
       .order("nome"),
@@ -48,7 +48,8 @@ export default async function PlanosPage() {
               <div>
                 <p className="font-display text-lg font-bold text-verde-900">{plano.nome}</p>
                 <p className="text-sm text-tinta-suave">
-                  {vezesPorSemana(plano.aulas_por_semana)} ·{" "}
+                  {vezesPorSemana(plano.aulas_por_semana)}
+                  {plano.aulas_extras_semana > 0 && ` + ${plano.aulas_extras_semana} extra`} ·{" "}
                   {plano.modalidade_id ? nomeModalidade.get(plano.modalidade_id) ?? "Modalidade inativa" : "Qualquer modalidade"}{" "}
                   · {ativasPorPlano.get(plano.id) ?? 0} matrícula(s) ativa(s)
                 </p>
