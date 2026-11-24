@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { CartaoAula } from "@/components/agenda/cartao-aula";
-import { Cabecalho, Cartao, Etiqueta, Vazio } from "@/components/agenda/ui";
-import { listarAulas, listarTurmas, turmasDoAluno } from "@/lib/agenda/consultas";
+import { Cabecalho, Cartao, classeBotao, Etiqueta, Vazio } from "@/components/agenda/ui";
+import Link from "next/link";
+import { listarAulas, listarTurmas, minhasReservas, ordenarAulas, turmasDoAluno } from "@/lib/agenda/consultas";
 import { agora, DIAS_SEMANA, diaSemanaIso, faixaHorario, formatarData, formatarHora, HORAS_ANTECEDENCIA_DESMARCAR, hoje, horaMenos, prazoDesmarcar, somarDias } from "@/lib/agenda/datas";
 import { rotuloPresenca, type StatusPresenca } from "@/lib/agenda/tipos";
 import { getSessao } from "@/lib/sessao";
-import { BotaoDesmarcar } from "./botao-desmarcar";
+import { BotaoCancelarReserva, BotaoDesmarcar } from "./botao-desmarcar";
 import { createClient } from "@/lib/supabase/server";
 
 export const instant = false;
@@ -29,10 +30,12 @@ export default async function MinhaAgendaPage() {
   const dia = hoje();
   const supabase = await createClient();
 
-  const turmaIds = await turmasDoAluno(perfil.id);
-  const [turmas, aulas, presencasRes] = await Promise.all([
+  const [turmaIds, reservas] = await Promise.all([turmasDoAluno(perfil.id), minhasReservas(perfil.id)]);
+  const tipoReserva = new Map(reservas.map((r) => [r.aula_reposicao_id, r.tipo]));
+  const [turmas, aulasTurmas, aulasReservadas, presencasRes] = await Promise.all([
     listarTurmas({ ids: turmaIds }),
     turmaIds.length ? listarAulas({ de: dia, ate: somarDias(dia, 28), turmaIds }) : Promise.resolve([]),
+    reservas.length ? listarAulas({ de: dia, ate: somarDias(dia, 31), ids: [...tipoReserva.keys()] }) : Promise.resolve([]),
     supabase
       .from("presencas")
       .select("id, status, aula:aulas(data, turma:turmas(nome))")
@@ -44,6 +47,7 @@ export default async function MinhaAgendaPage() {
     (b.aula?.data ?? "").localeCompare(a.aula?.data ?? ""),
   );
   const presentes = presencas.filter((p) => p.status === "presente").length;
+  const aulas = ordenarAulas([...aulasTurmas, ...aulasReservadas]);
 
   // Minhas marcações nas próximas aulas (desmarcadas por mim ficam como falta justificada).
   const { data: futuras } = aulas.length
@@ -54,7 +58,15 @@ export default async function MinhaAgendaPage() {
 
   return (
     <>
-      <Cabecalho titulo="Minha agenda" subtitulo="Seus horários fixos, as próximas aulas e sua frequência." />
+      <Cabecalho
+        titulo="Minha agenda"
+        subtitulo="Seus horários fixos, as próximas aulas e sua frequência."
+        acoes={
+          <Link href="/aluno/reposicao" className={classeBotao}>
+            Reservar reposição ou aula extra
+          </Link>
+        }
+      />
 
       <section className="mb-10">
         <h2 className="mb-3 font-display text-xl font-semibold text-verde-900">Meus horários</h2>
@@ -95,6 +107,18 @@ export default async function MinhaAgendaPage() {
                   </p>
                   <CartaoAula aula={a} />
                   {(() => {
+                    const reserva = tipoReserva.get(a.id);
+                    if (reserva) {
+                      const prazoR = prazoDesmarcar(a.data, a.turma?.hora_inicio ?? "00:00:00");
+                      return (
+                        <div className="mt-2 flex flex-col gap-1">
+                          <p className="rounded-2xl bg-verde-50 px-3 py-1.5 text-center text-xs font-bold text-verde-700">
+                            {reserva === "extra" ? "Aula extra do seu plano" : "Reposição reservada"}
+                          </p>
+                          {a.status === "agendada" && prazoR.getTime() > instante && <BotaoCancelarReserva aulaId={a.id} />}
+                        </div>
+                      );
+                    }
                     const m = marcacao.get(a.id);
                     const desmarcada = m?.observacao === "Desmarcada pelo aluno";
                     const prazo = prazoDesmarcar(a.data, a.turma?.hora_inicio ?? "00:00:00");
@@ -121,8 +145,8 @@ export default async function MinhaAgendaPage() {
             </div>
           )}
           <p className="mt-3 text-xs text-tinta-suave">
-            Não vai conseguir ir? Desmarque até 2 horas antes do início. A vaga fica livre para reposição de outro aluno e
-            conta como falta justificada.
+            Não vai conseguir ir? Desmarque até 2 horas antes do início. A vaga fica livre para outro aluno, conta como falta
+            justificada e vira um crédito para repor em outra turma da mesma modalidade em até 30 dias.
           </p>
         </section>
 

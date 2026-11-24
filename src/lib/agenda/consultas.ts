@@ -39,11 +39,12 @@ export async function buscarTurma(id: string) {
   return data as unknown as Turma | null;
 }
 
-export async function listarAulas(filtro: { de: string; ate: string; professorId?: string; turmaIds?: string[] }) {
+export async function listarAulas(filtro: { de: string; ate: string; professorId?: string; turmaIds?: string[]; ids?: string[] }) {
   const supabase = await createClient();
   let q = supabase.from("aulas").select(SELECT_AULA).gte("data", filtro.de).lte("data", filtro.ate);
   if (filtro.professorId) q = q.eq("professor_id", filtro.professorId);
   if (filtro.turmaIds) q = q.in("turma_id", filtro.turmaIds.length ? filtro.turmaIds : ["00000000-0000-0000-0000-000000000000"]);
+  if (filtro.ids) q = q.in("id", filtro.ids.length ? filtro.ids : ["00000000-0000-0000-0000-000000000000"]);
   const { data, error } = await q.order("data");
   if (error) falha("as aulas", error);
   return ordenarAulas(data as unknown as Aula[]);
@@ -122,4 +123,16 @@ export async function vagasLivresAula(aulaId: string) {
     return null;
   }
   return data as number | null;
+}
+
+// Reservas do aluno logado em outras turmas (reposição ou aula extra do plano).
+export type Reserva = { aula_reposicao_id: string; tipo: "reposicao" | "extra" };
+export async function minhasReservas(alunoId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("reposicoes").select("aula_reposicao_id, tipo").eq("aluno_id", alunoId);
+  if (error) {
+    console.error("[agenda] reposicoes:", error.code, error.message);
+    return [] as Reserva[];
+  }
+  return (data ?? []) as Reserva[];
 }

@@ -35,3 +35,44 @@ set request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","role":"
 select pg_temp.esperar_erro(format('select beach.desmarcar_aula(%L)', :'aula_futura'), 'aluno de outra turma desmarca');
 -- aluno não insere presença direto
 select pg_temp.esperar_erro(format($$insert into beach.presencas (aula_id, aluno_id) values (%L, auth.uid())$$, :'aula_futura'), 'aluno insere presença direto');
+
+-- ===== Reposição e aula extra =====
+set request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000e","role":"authenticated"}';
+insert into beach.turmas (nome, modalidade_id, nivel_id, professor_id, quadra_id, dia_semana, hora_inicio, hora_fim, vagas)
+select 'BT Livre Sex 10h', modalidade_id, nivel_id, professor_id, (select id from beach.quadras where nome='Quadra 2'), 5, '10:00', '11:00', 5
+from beach.turmas where nome like 'BT%' limit 1;
+select beach.gerar_aulas(current_date + 1, current_date + 21) >= 0 as gerou2;
+select a.id as livre1 from beach.aulas a join beach.turmas t on t.id=a.turma_id where t.nome='BT Livre Sex 10h' and a.data > current_date + 1 order by a.data limit 1 \gset
+select a.id as livre1b from beach.aulas a join beach.turmas t on t.id=a.turma_id where t.nome='BT Livre Sex 10h' and a.data > current_date + 1 order by a.data offset 1 limit 1 \gset
+-- o seed cria os planos depois da migration: configura a extra do 2x aqui
+update beach.planos set aulas_extras_semana = 1 where nome = '2x';
+select 'extras plano 2x' t, aulas_extras_semana from beach.planos where nome='2x';
+
+-- aluno 2 (plano 2x, só no vôlei): usa a aula extra da semana
+set request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","role":"authenticated"}';
+select 'a2 vê vagas p/ extra' t, count(*) > 0 from beach.vagas_para_reposicao(current_date, current_date + 21) where aula_id = :'livre1';
+select beach.reservar_reposicao(:'livre1') is not null as reservou_extra;
+select 'tipo' t, tipo from beach.reposicoes where aula_reposicao_id = :'livre1';
+select 'a2 vê a aula da reposição' t, count(*) from beach.aulas where id = :'livre1';
+select pg_temp.esperar_erro(format('select beach.reservar_reposicao(%L)', :'livre1'), 'reservar 2x a mesma aula');
+-- segunda extra na mesma semana: sem crédito
+-- na semana seguinte ele tem outra extra
+select beach.reservar_reposicao(:'livre1b') is not null as reservou_extra_semana_seguinte;
+select beach.cancelar_reposicao(:'livre1b');
+select beach.cancelar_reposicao(:'livre1');
+select 'após cancelar' t, (select count(*) from beach.reposicoes where aluno_id = auth.uid()) reps, (select count(*) from beach.presencas where aula_id = :'livre1' and aluno_id = auth.uid()) pres;
+
+-- aluno 1 (plano 1x, sem extra): precisa desmarcar para ganhar crédito
+set request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}';
+select 'a1 sem crédito vê vagas' t, count(*) from beach.vagas_para_reposicao(current_date, current_date + 21);
+select pg_temp.esperar_erro(format('select beach.reservar_reposicao(%L)', :'livre1'), 'reservar sem crédito');
+select beach.desmarcar_aula(:'aula_futura');
+select 'créditos a1' t, count(*) from beach.meus_creditos_reposicao();
+select beach.reservar_reposicao(:'livre1') is not null as reservou_reposicao;
+select 'tipo a1' t, tipo, aula_desmarcada_id = :'aula_futura' as credito_certo from beach.reposicoes where aula_reposicao_id = :'livre1' and aluno_id = auth.uid();
+select 'créditos após usar' t, count(*) from beach.meus_creditos_reposicao();
+select pg_temp.esperar_erro(format('select beach.remarcar_aula(%L)', :'aula_futura'), 'remarcar com crédito usado');
+select beach.cancelar_reposicao(:'livre1');
+select beach.remarcar_aula(:'aula_futura');
+select 'a1 final' t, (select count(*) from beach.reposicoes where aluno_id = auth.uid()) reps, (select count(*) from beach.presencas where aluno_id = auth.uid() and aula_id in (:'livre1', :'aula_futura')) pres;
+select pg_temp.esperar_erro($$insert into beach.reposicoes (aluno_id, tipo, aula_reposicao_id) select auth.uid(), 'extra', id from beach.aulas limit 1$$, 'aluno insere reposição direto');
