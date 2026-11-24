@@ -15,6 +15,8 @@ import {
 } from "@/lib/frequencia";
 import { excluirCheckin } from "@/lib/frequencia-acoes";
 
+const maiuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
 const SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 type Props = {
@@ -172,7 +174,7 @@ export function PainelFrequencia({ nome, resumo, atividades, grade, mes, dia, ho
       {dia && (
         <section id="dia" className="rounded-3xl border border-areia-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-display text-xl font-bold capitalize text-verde-900">{formatarDataLonga(dia)}</h2>
+            <h2 className="font-display text-xl font-bold text-verde-900">{maiuscula(formatarDataLonga(dia))}</h2>
             {editavel && (
               <Link href={novoHref} className="text-sm font-bold text-verde-700 hover:underline">
                 + Registrar {doDia.length ? "outra" : "atividade"}
