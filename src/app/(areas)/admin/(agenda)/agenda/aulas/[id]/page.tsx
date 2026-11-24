@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { FormChamada } from "@/components/agenda/form-chamada";
 import { Cartao, Etiqueta, LinkVoltar, SeloStatus } from "@/components/agenda/ui";
 import { salvarChamada } from "@/lib/agenda/acoes-chamada";
-import { buscarAula, listaChamada, opcoesCadastro } from "@/lib/agenda/consultas";
+import { buscarAula, listaChamada, opcoesCadastro, vagasLivresAula } from "@/lib/agenda/consultas";
 import { faixaHorario, formatarDataLonga, inicioDaSemana } from "@/lib/agenda/datas";
 import { createClient } from "@/lib/supabase/server";
 import { adicionarAvulso, atualizarAula } from "../../../acoes";
@@ -18,11 +18,13 @@ export default async function AulaAdminPage({ params }: PageProps<"/admin/agenda
   if (!aula || !aula.turma) notFound();
 
   const supabase = await createClient();
-  const [lista, opcoes, alunos] = await Promise.all([
+  const [lista, opcoes, alunos, vagasLivres] = await Promise.all([
     listaChamada(id),
     opcoesCadastro(),
     supabase.from("perfis").select("id, nome").eq("papel", "aluno").eq("ativo", true).order("nome"),
+    vagasLivresAula(id),
   ]);
+  const desmarcados = lista.filter((i) => i.matriculado && i.observacao === "Desmarcada pelo aluno").length;
   const naLista = new Set(lista.map((i) => i.aluno_id));
   const avulsos = ((alunos.data ?? []) as { id: string; nome: string }[]).filter((a) => !naLista.has(a.id));
   const t = aula.turma;
@@ -74,6 +76,12 @@ export default async function AulaAdminPage({ params }: PageProps<"/admin/agenda
             <Cartao>
               <h2 className="mb-1 font-display text-lg font-semibold text-verde-900">Reposição ou aula avulsa</h2>
               <p className="mb-3 text-sm text-tinta-suave">Inclui na chamada um aluno que não é desta turma.</p>
+              {vagasLivres !== null && (
+                <p className={`mb-3 rounded-2xl px-3 py-2 text-sm font-semibold ${vagasLivres > 0 ? "bg-verde-50 text-verde-700" : "bg-areia-100 text-tinta-suave"}`}>
+                  {vagasLivres > 0 ? `${vagasLivres} vaga(s) livre(s) nesta aula` : "Sem vagas livres nesta aula"}
+                  {desmarcados > 0 && ` · ${desmarcados} aluno(s) desmarcaram`}
+                </p>
+              )}
               <FormAvulso acao={adicionarAvulso.bind(null, id)} alunos={avulsos} />
             </Cartao>
           )}
