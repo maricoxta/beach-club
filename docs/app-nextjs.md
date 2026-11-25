@@ -100,6 +100,7 @@ Configuração necessária no Supabase:
 - `/aluno/avisos`: avisos "vaga disponível na turma X com o professor Y" calculados na leitura (`beach.meus_avisos`),
   sem agendador. O menu mostra "Avisos (n)" e o início do aluno mostra um destaque; abrir a página marca como lidos.
 - Migration `20261125013000_beach_liberacao_vagas`, teste `supabase/tests/07_liberacao_vagas.sql`.
+- Aviso de desmarcação: quando um aluno desmarca, a recepção vê "Agenda e turmas (n)" no menu, destaque no painel e a lista em `/admin/vagas` com "Liberar vaga" (+1 vaga liberada agora, `beach.liberar_desmarcacao`) ou "Não liberar" (`beach.manter_desmarcacao`). Salvar uma liberação pelo formulário depois da desmarcação também conta como decisão. Migration `20261125021000_beach_aviso_desmarcacao`, teste `08_aviso_desmarcacao.sql`.
 
 ## Calendário de frequência do aluno
 
