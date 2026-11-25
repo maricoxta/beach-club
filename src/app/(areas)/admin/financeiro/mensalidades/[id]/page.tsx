@@ -82,8 +82,9 @@ export default async function MensalidadePage({ params }: PageProps<"/admin/fina
   const s = situacao(m);
   const mes = m.competencia.slice(0, 7);
   const admin = perfil?.papel === "admin";
-  // Pix com o saldo em aberto (só se a chave do clube estiver ativa).
-  const pix = configPix?.ativo && m.status === "aberta" && Number(m.saldo) > 0 ? configPix : null;
+  // Pix com o saldo em aberto. A recepção gera mesmo com o Pix pausado para os alunos.
+  const cobravel = m.status === "aberta" && Number(m.saldo) > 0;
+  const pix = configPix && cobravel ? configPix : null;
   const copiaECola = pix
     ? gerarPixCopiaECola({
         chave: pix.chave,
@@ -126,7 +127,7 @@ export default async function MensalidadePage({ params }: PageProps<"/admin/fina
         <div className="flex flex-wrap gap-2">
           {whats && (
             <a href={whats} target="_blank" rel="noopener noreferrer" className={classeBotaoSecundario}>
-              Lembrar no WhatsApp
+              {copiaECola ? "Enviar Pix no WhatsApp" : "Lembrar no WhatsApp"}
             </a>
           )}
           <Link href={`/admin/alunos/${m.aluno_id}`} className={classeBotaoSecundario}>
@@ -232,6 +233,33 @@ export default async function MensalidadePage({ params }: PageProps<"/admin/fina
         </div>
 
         <div className="flex flex-col gap-6">
+          {cobravel && !configPix && (
+            <Painel titulo="Cobrar por Pix">
+              <p className="text-sm text-tinta-suave">
+                Para gerar o QR Code e o Pix copia e cola desta mensalidade, cadastre antes a chave Pix do clube.
+              </p>
+              {admin ? (
+                <Link href="/admin/financeiro/pix" className={`${classeBotaoSecundario} mt-3 inline-block`}>
+                  Cadastrar chave Pix
+                </Link>
+              ) : (
+                <p className="mt-2 text-xs text-tinta-suave">Só o admin cadastra a chave.</p>
+              )}
+            </Painel>
+          )}
+
+          {pix && (
+            <Painel titulo="Cobrar por Pix">
+              <PixCobranca
+                config={pix}
+                valor={Number(m.saldo)}
+                prefixo="M"
+                id={m.id}
+                instrucao="O aluno também vê este QR Code no app. Quando o Pix cair na conta do clube, registre o pagamento abaixo com a forma Pix."
+              />
+            </Painel>
+          )}
+
           {m.status === "aberta" && (
             <Painel titulo="Registrar pagamento" className="border-verde-600/30">
               <FormAcao acao={registrarPagamento} rotulo="Registrar pagamento" rotuloPendente="Registrando…">
@@ -255,18 +283,6 @@ export default async function MensalidadePage({ params }: PageProps<"/admin/fina
                   <input name="observacao" placeholder="Opcional" className={classeCampo} />
                 </Campo>
               </FormAcao>
-            </Painel>
-          )}
-
-          {pix && (
-            <Painel titulo="Cobrar por Pix">
-              <PixCobranca
-                config={pix}
-                valor={Number(m.saldo)}
-                prefixo="M"
-                id={m.id}
-                instrucao="O aluno também vê este QR Code no app. Quando o Pix cair na conta do clube, registre o pagamento acima com a forma Pix."
-              />
             </Painel>
           )}
 
