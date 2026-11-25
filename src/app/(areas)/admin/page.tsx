@@ -19,7 +19,7 @@ export default async function AdminPage() {
         <CartaoModulo titulo="Agenda e turmas" descricao="Modalidade, nível, professor, quadra, horário, vagas e presença." href="/admin/agenda" />
         <CartaoModulo titulo="Alunos e planos" descricao="Matrículas e planos de 1x, 2x ou 3x por semana." href="/admin/alunos" />
         <CartaoModulo titulo="Financeiro" descricao="Mensalidades, pagamentos, inadimplência e relatório mensal." href="/admin/financeiro" />
-        <CartaoModulo titulo="Locação de quadras" descricao="Reservas avulsas por hora." destaque="Em breve" />
+        <CartaoModulo titulo="Locação de quadras" descricao="Reservas avulsas por hora, grade de quadras e pagamentos." href="/admin/locacoes" />
       </div>
     </>
   );

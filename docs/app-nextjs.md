@@ -114,5 +114,24 @@ Configuração necessária no Supabase:
 - Não precisou de migration: tabelas, trigger de status (pagamentos → mensalidade paga/aberta), RPC e views já estavam em `20261124203240_beach_financeiro`.
 - Regimes: previsto, em aberto e os quadros por modalidade/plano usam a **competência**; "recebido no mês" e formas de pagamento usam **caixa** (`pagamentos.pago_em`).
 - Datas de pagamento do formulário são gravadas ao meio-dia de Brasília (`pagoEmDaData`) para não mudar de dia por fuso.
-- Gancho da locação: o relatório já lê `beach.locacoes` (reservas e horas do mês) e `pagamentos.locacao_id` (recebido). Quando o módulo de locação registrar o pagamento de uma reserva em `beach.pagamentos` com `locacao_id`, a receita aparece sozinha.
+- Locação no relatório: o relatório lê `beach.locacoes` (reservas e horas do mês) e soma como receita os `pagamentos` com `locacao_id` (gravados pelo módulo de locação), pelo mês de `pago_em`.
 - Código: `src/app/(areas)/admin/financeiro/`, `src/lib/financeiro.ts`, `src/components/financeiro/ui.tsx`.
+
+## Locação avulsa de quadras
+
+| Rota | Quem | O que faz |
+| --- | --- | --- |
+| `/admin/locacoes` | admin, recepção | Grade de disponibilidade. **Dia**: horários × quadras. **Semana**: horários × dias de uma quadra. Mostra aulas de turma (bloqueiam) e locações (cor pela situação do pagamento). Clique num horário livre para reservar. |
+| `/admin/locacoes/nova` | admin, recepção | Reserva: quadra, data, início, duração (1 a 4 h cheias), cliente (aluno do clube ou avulso com nome/telefone), valor/hora (em branco = preço da quadra) e opção "já recebi o pagamento". |
+| `/admin/locacoes/[id]` | admin, recepção | Detalhe, link de WhatsApp, pagamentos (parciais ou total), confirmar e cancelar (cancelar libera o horário). |
+| `/admin/locacoes/reservas` | admin, recepção | Lista por período/quadra, filtro "só a receber", totais de valor reservado, recebido e a receber. |
+
+- Sem migration nova: usa `beach.locacoes` e `beach.pagamentos` (migration `20261124203240_beach_financeiro`).
+  O banco garante hora cheia, mesmo dia, sem sobreposição com outra locação (`locacoes_sem_conflito`) e sem
+  conflito com turma ativa (trigger `tg_locacoes_valida`, que libera o horário quando a aula do dia está cancelada).
+  O trigger também congela o `valor_hora` da quadra quando ele vem em branco.
+- Pagamento de locação = linha em `beach.pagamentos` com `locacao_id`. A situação (pago, pago em parte, a pagar)
+  é calculada somando os pagamentos contra `valor_total`; não há coluna de status de pagamento. Para o relatório
+  mensal, `beach.vw_relatorio_mensal.recebido_locacoes` já soma esses pagamentos pelo mês de `pago_em`.
+- Faixa da grade: 6h às 23h (`HORA_ABRE`/`HORA_FECHA` em `src/lib/locacoes/regras.ts`). Código: `src/lib/locacoes/`.
+- Aluno ainda não pede locação pelo app: o RLS só deixa staff inserir em `beach.locacoes`.

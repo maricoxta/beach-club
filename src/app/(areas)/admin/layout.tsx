@@ -12,7 +12,7 @@ export default async function Layout({ children }: LayoutProps<"/admin">) {
         { href: "/admin/agenda", rotulo: "Agenda e turmas" },
         { href: "/admin/alunos", rotulo: "Alunos e planos" },
         { href: "/admin/financeiro", rotulo: "Financeiro" },
-        { rotulo: "Locação de quadras" },
+        { href: "/admin/locacoes", rotulo: "Locação de quadras" },
       ]}>
       {children}
     </AreaShell>
