@@ -93,8 +93,8 @@ export default async function RelatorioPage({ searchParams }: PageProps<"/admin/
       .order("mes"),
     supabase.from("vw_mensalidades").select("*").eq("competencia", competencia).neq("status", "cancelada"),
     supabase.from("pagamentos").select("valor, forma, mensalidade_id, locacao_id").gte("pago_em", de).lt("pago_em", ate),
-    // Gancho para o módulo de locação: reservas do mês (o recebido vem dos pagamentos com locacao_id).
-    supabase.from("locacoes").select("valor_total, horas").neq("status", "cancelada").gte("inicio", de).lt("inicio", ate),
+    // Reservas do mês (pedidos de aluno ainda não aprovados ficam de fora); o recebido vem dos pagamentos com locacao_id.
+    supabase.from("locacoes").select("valor_total, horas").not("status", "in", "(cancelada,solicitada)").gte("inicio", de).lt("inicio", ate),
   ]);
 
   const historico = (rel ?? []) as LinhaRelatorio[];
