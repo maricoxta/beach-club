@@ -8,16 +8,21 @@ import { exigirStaff, mensagemErro, numero, texto, textoOuNull } from "@/lib/sta
 function lerPlano(form: FormData) {
   const nome = texto(form, "nome");
   const aulas = Number(texto(form, "aulas_por_semana"));
+  const extras = Number(texto(form, "aulas_extras_semana") || 0);
   const valor = numero(form, "valor_mensal");
   if (!nome) return { erro: "Informe o nome do plano." } as const;
   if (!Number.isInteger(aulas) || aulas < 1 || aulas > 7) {
     return { erro: "Aulas por semana deve ser de 1 a 7." } as const;
+  }
+  if (!Number.isInteger(extras) || extras < 0 || extras > 7) {
+    return { erro: "Aulas extras por semana deve ser de 0 a 7." } as const;
   }
   if (valor === null || valor < 0) return { erro: "Informe um valor mensal válido." } as const;
   return {
     dados: {
       nome,
       aulas_por_semana: aulas,
+      aulas_extras_semana: extras,
       valor_mensal: valor,
       modalidade_id: textoOuNull(form, "modalidade_id"),
       ativo: form.get("ativo") === "on",

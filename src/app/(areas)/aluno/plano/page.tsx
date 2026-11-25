@@ -53,7 +53,7 @@ type Matricula = {
   data_fim: string | null;
   dia_vencimento: number;
   valor_mensal: number;
-  planos: { nome: string; aulas_por_semana: number } | null;
+  planos: { nome: string; aulas_por_semana: number; aulas_extras_semana: number } | null;
   matricula_turmas: { turmas: Turma | null }[];
 };
 
@@ -64,7 +64,7 @@ export default async function MeuPlanoPage() {
   const { data: rows } = await supabase
     .from("matriculas")
     .select(
-      "id, status, data_inicio, data_fim, dia_vencimento, valor_mensal, planos(nome, aulas_por_semana), matricula_turmas(turmas(id, nome, dia_semana, hora_inicio, hora_fim, modalidades(nome), niveis(nome), quadras(nome), professor:perfis!professor_id(nome)))",
+      "id, status, data_inicio, data_fim, dia_vencimento, valor_mensal, planos(nome, aulas_por_semana, aulas_extras_semana), matricula_turmas(turmas(id, nome, dia_semana, hora_inicio, hora_fim, modalidades(nome), niveis(nome), quadras(nome), professor:perfis!professor_id(nome)))",
     )
     .eq("aluno_id", perfil?.id ?? "")
     .order("data_inicio", { ascending: false });
@@ -125,7 +125,9 @@ export default async function MeuPlanoPage() {
                     {m.status === "ativa" ? <Selo cor="verde">Ativa</Selo> : <Selo cor="sol">Pausada</Selo>}
                   </div>
                   <p className="text-sm text-tinta-suave">
-                    {vezesPorSemana(limite)} · desde {data(m.data_inicio)}
+                    {vezesPorSemana(limite)}
+                    {(m.planos?.aulas_extras_semana ?? 0) > 0 && ` + ${m.planos?.aulas_extras_semana} aula extra por semana`} ·
+                    desde {data(m.data_inicio)}
                   </p>
                 </div>
                 <div className="text-right">
