@@ -132,10 +132,19 @@ export async function liberarVagas(aulaId: string, _: EstadoAcao, form: FormData
   const supabase = await createClient();
   const { error } = await supabase.rpc("liberar_vagas", { p_aula: aulaId, p_vagas: vagas, p_liberar_em: liberarEm });
   if (error) return { erro: mensagemErro(error) };
-  revalidatePath("/admin/vagas");
-  revalidatePath(`/admin/agenda/aulas/${aulaId}`);
+  revalidatePath("/admin", "layout");
   if (vagas === 0) return { ok: "Liberação retirada. Os alunos não veem mais esta vaga." };
   return { ok: liberarEm ? "Liberação agendada. Os alunos recebem o aviso no horário escolhido." : "Vagas liberadas! Os alunos do nível já receberam o aviso no app." };
+}
+
+// Aviso de desmarcação: liberar a vaga (+1 na liberação da aula) ou manter fechada.
+export async function decidirDesmarcacao(presencaId: string, liberar: boolean): Promise<EstadoAcao> {
+  await exigirStaff();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc(liberar ? "liberar_desmarcacao" : "manter_desmarcacao", { p_presenca: presencaId });
+  if (error) return { erro: mensagemErro(error) };
+  revalidatePath("/admin", "layout");
+  return { ok: liberar ? "Vaga liberada. Os alunos do nível já recebem o aviso." : "Ok, a vaga fica fechada." };
 }
 
 // ---------------------------------------------------------------- quadras

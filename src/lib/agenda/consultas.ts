@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Aula, ItemChamada, Opcao, Turma } from "./tipos";
 
@@ -136,4 +137,40 @@ export async function minhasReservas(alunoId: string) {
     return [] as Reserva[];
   }
   return (data ?? []) as Reserva[];
+}
+
+// Desmarcações que a recepção ainda não decidiu (liberar a vaga ou não). Memoizado por request:
+// o menu, as abas da agenda e o painel usam o mesmo número.
+export const contarDesmarcacoesPendentes = cache(async (): Promise<number> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("contar_desmarcacoes_pendentes");
+  if (error) {
+    console.error("[agenda] contar_desmarcacoes_pendentes:", error.code, error.message);
+    return 0;
+  }
+  return (data as number | null) ?? 0;
+});
+
+export type DesmarcacaoPendente = {
+  presenca_id: string;
+  aula_id: string;
+  aluno: string;
+  desmarcada_em: string;
+  data: string;
+  hora_inicio: string;
+  hora_fim: string;
+  turma: string;
+  modalidade: string;
+  nivel: string;
+  professor: string | null;
+  vagas_livres: number;
+  liberadas: number | null;
+  liberar_em: string | null;
+};
+
+export async function desmarcacoesPendentes(): Promise<DesmarcacaoPendente[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("desmarcacoes_pendentes");
+  if (error) console.error("[agenda] desmarcacoes_pendentes:", error.code, error.message);
+  return (data ?? []) as DesmarcacaoPendente[];
 }
