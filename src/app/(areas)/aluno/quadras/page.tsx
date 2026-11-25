@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Cabecalho, Vazio } from "@/components/agenda/ui";
+import { PixCobranca } from "@/components/pix/pix-cobranca";
 import { Alerta, Selo } from "@/components/ui";
 import { agora, DIAS_SEMANA, diaSemanaIso, formatarData, formatarDataLonga, hoje, isData, somarDias } from "@/lib/agenda/datas";
 import { moeda } from "@/lib/formato";
 import { horariosOcupados, listarMinhasLocacoes, listarQuadras } from "@/lib/locacoes/dados";
 import { ANTECEDENCIA_PEDIDO_H, HORA_ABRE, HORA_FECHA, horaMin, instante, rotuloStatusAluno } from "@/lib/locacoes/regras";
+import { lerConfigPix } from "@/lib/pix-dados";
 import { getSessao } from "@/lib/sessao";
 import { cancelarMinhaLocacao } from "./acoes";
 import { BotaoCancelar } from "./botao-cancelar";
@@ -24,11 +26,13 @@ export default async function AlunoQuadrasPage({ searchParams }: PageProps<"/alu
   const ultimo = somarDias(dia, DIAS_VISIVEIS - 1);
   const data = isData(sp.data) && sp.data >= dia && sp.data <= ultimo ? sp.data : dia;
 
-  const [quadras, ocupados, minhas] = await Promise.all([
+  const [quadras, ocupados, minhas, configPix] = await Promise.all([
     listarQuadras(),
     horariosOcupados(data, data),
     listarMinhasLocacoes(perfil!.id, somarDias(dia, -1)),
+    lerConfigPix(),
   ]);
+  const pix = configPix?.ativo ? configPix : null;
   const limite = agora() + ANTECEDENCIA_PEDIDO_H * 3600_000;
   const ativas = minhas.filter((l) => l.status !== "cancelada");
   const dias = Array.from({ length: DIAS_VISIVEIS }, (_, i) => somarDias(dia, i));
@@ -53,8 +57,11 @@ export default async function AlunoQuadrasPage({ searchParams }: PageProps<"/alu
             {ativas.map((l) => {
               const podeCancelar =
                 l.status === "solicitada" || (l.pago === 0 && new Date(instante(l.data, l.ini)).getTime() > limite);
+              // Só cobra depois que a recepção aceita o pedido.
+              const restante = Math.max(0, Math.round((l.total - l.pago) * 100) / 100);
+              const pagavel = pix && (l.status === "reservada" || l.status === "confirmada") && restante > 0;
               return (
-                <li key={l.id} className="flex items-start justify-between gap-3 rounded-3xl border border-areia-200 bg-white p-4 shadow-sm">
+                <li key={l.id} className="flex flex-wrap items-start justify-between gap-3 rounded-3xl border border-areia-200 bg-white p-4 shadow-sm">
                   <div>
                     <p className="font-bold text-verde-900">
                       {DIAS_SEMANA[diaSemanaIso(l.data)].curto} {formatarData(l.data)} · {horaMin(l.ini)} às {horaMin(l.fim)}
@@ -72,6 +79,17 @@ export default async function AlunoQuadrasPage({ searchParams }: PageProps<"/alu
                       acao={cancelarMinhaLocacao.bind(null, l.id)}
                       rotulo={l.status === "solicitada" ? "Cancelar pedido" : "Cancelar"}
                     />
+                  )}
+                  {pagavel && (
+                    <details className="group w-full rounded-2xl border border-verde-600/30 bg-verde-50/40 px-4 py-2">
+                      <summary className="cursor-pointer list-none text-sm font-bold text-verde-700">
+                        <span className="group-open:hidden">Pagar {moeda(restante)} com Pix</span>
+                        <span className="hidden group-open:inline">Fechar Pix</span>
+                      </summary>
+                      <div className="pb-2 pt-3">
+                        <PixCobranca config={pix} valor={restante} prefixo="L" id={l.id} />
+                      </div>
+                    </details>
                   )}
                 </li>
               );
