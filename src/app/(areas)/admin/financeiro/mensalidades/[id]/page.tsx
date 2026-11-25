@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FormAcao } from "@/components/form-acao";
+import { PixCobranca } from "@/components/pix/pix-cobranca";
 import {
   Campo,
   Painel,
@@ -20,6 +21,8 @@ import {
   type MensalidadeView,
 } from "@/lib/financeiro";
 import { data, hojeISO, moeda } from "@/lib/formato";
+import { gerarPixCopiaECola, txidDe } from "@/lib/pix";
+import { lerConfigPix } from "@/lib/pix-dados";
 import { getSessao } from "@/lib/sessao";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -59,7 +62,7 @@ export default async function MensalidadePage({ params }: PageProps<"/admin/fina
   if (!linha) notFound();
   const m = linha as MensalidadeView;
 
-  const [{ data: matricula }, { data: aluno }, { data: pags }, { perfil }] = await Promise.all([
+  const [{ data: matricula }, { data: aluno }, { data: pags }, { perfil }, configPix] = await Promise.all([
     supabase
       .from("matriculas")
       .select("status, dia_vencimento, valor_mensal, planos(nome, modalidades(nome))")
@@ -72,18 +75,32 @@ export default async function MensalidadePage({ params }: PageProps<"/admin/fina
       .eq("mensalidade_id", id)
       .order("pago_em"),
     getSessao(),
+    lerConfigPix(),
   ]);
   const pagamentos = (pags ?? []) as unknown as Pagamento[];
   const plano = (matricula?.planos ?? null) as unknown as { nome: string; modalidades: { nome: string } | null } | null;
   const s = situacao(m);
   const mes = m.competencia.slice(0, 7);
   const admin = perfil?.papel === "admin";
+  // Pix com o saldo em aberto (só se a chave do clube estiver ativa).
+  const pix = configPix?.ativo && m.status === "aberta" && Number(m.saldo) > 0 ? configPix : null;
+  const copiaECola = pix
+    ? gerarPixCopiaECola({
+        chave: pix.chave,
+        nome: pix.nome_recebedor,
+        cidade: pix.cidade,
+        valor: Number(m.saldo),
+        txid: txidDe("M", m.id),
+      })
+    : null;
   const whats =
     m.status === "aberta"
       ? linkWhatsApp(
           aluno?.telefone,
           `Olá, ${m.aluno_nome.split(" ")[0]}! A mensalidade de ${rotuloMes(mes)} (${moeda(m.saldo)}) ` +
-            `${m.vencida ? "venceu" : "vence"} em ${data(m.vencimento)}. Qualquer dúvida, estamos à disposição.`,
+            `${m.vencida ? "venceu" : "vence"} em ${data(m.vencimento)}.` +
+            (copiaECola ? ` Para pagar, use o Pix copia e cola abaixo (o valor já vem preenchido):\n\n${copiaECola}\n\n` : " ") +
+            "Qualquer dúvida, estamos à disposição.",
         )
       : null;
 
@@ -238,6 +255,18 @@ export default async function MensalidadePage({ params }: PageProps<"/admin/fina
                   <input name="observacao" placeholder="Opcional" className={classeCampo} />
                 </Campo>
               </FormAcao>
+            </Painel>
+          )}
+
+          {pix && (
+            <Painel titulo="Cobrar por Pix">
+              <PixCobranca
+                config={pix}
+                valor={Number(m.saldo)}
+                prefixo="M"
+                id={m.id}
+                instrucao="O aluno também vê este QR Code no app. Quando o Pix cair na conta do clube, registre o pagamento acima com a forma Pix."
+              />
             </Painel>
           )}
 

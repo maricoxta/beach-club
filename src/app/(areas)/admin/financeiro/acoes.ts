@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import type { EstadoAcao } from "@/components/form-acao";
 import { competenciaDoMes, isForma, pagoEmDaData, rotuloMes } from "@/lib/financeiro";
 import { hojeISO } from "@/lib/formato";
+import { TIPOS_CHAVE, isTipoChave, normalizarChave, textoPix } from "@/lib/pix";
 import { createClient } from "@/lib/supabase/server";
 import { exigirStaff, mensagemErro, numero, texto, textoOuNull } from "@/lib/staff";
 
@@ -140,4 +141,34 @@ export async function mudarStatusMensalidade(_: EstadoAcao, form: FormData): Pro
   if (error) return { erro: mensagemErro(error) };
   refresh();
   return { ok: acao === "cancelar" ? "Mensalidade cancelada. Ela sai do previsto e da inadimplência." : "Mensalidade reaberta." };
+}
+
+// ---------------------------------------------------------------------------
+// Chave Pix do clube (linha única). Só admin altera (RLS de beach.config_pix).
+// ---------------------------------------------------------------------------
+export async function salvarConfigPix(_: EstadoAcao, form: FormData): Promise<EstadoAcao> {
+  const perfil = await exigirStaff();
+  if (perfil.papel !== "admin") return { erro: "Apenas o admin pode alterar a chave Pix do clube." };
+  const tipo = texto(form, "tipo_chave");
+  if (!isTipoChave(tipo)) return { erro: "Escolha o tipo da chave." };
+  const chave = normalizarChave(tipo, texto(form, "chave"));
+  if (!chave) return { erro: `Chave inválida para o tipo ${TIPOS_CHAVE[tipo]}.` };
+  const nome = textoPix(texto(form, "nome_recebedor"), 25);
+  const cidade = textoPix(texto(form, "cidade"), 15);
+  if (!nome) return { erro: "Informe o nome do recebedor (como aparece na conta do banco)." };
+  if (!cidade) return { erro: "Informe a cidade da conta." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("config_pix").upsert({
+    id: true,
+    chave,
+    tipo_chave: tipo,
+    nome_recebedor: nome,
+    cidade,
+    ativo: form.get("ativo") === "on",
+    atualizado_por: perfil.id,
+  });
+  if (error) return { erro: mensagemErro(error) };
+  refresh();
+  return { ok: "Chave Pix salva. Faça o teste de R$ 1,00 abaixo antes de liberar para os alunos." };
 }

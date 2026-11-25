@@ -163,3 +163,12 @@ Configuração necessária no Supabase:
 - Recepção: a grade mostra o pedido tracejado em amarelo e um aviso "N pedidos aguardando"; no detalhe, **Aprovar pedido**
   (vira `confirmada`) ou **Recusar pedido** (vira `cancelada`). Filtro "Pedidos de alunos" em Reservas e pagamentos.
 - Teste local: `supabase/tests/06_locacao_aluno.sql`.
+
+## Pix do clube (sem provedor, sem taxa)
+
+- Admin cadastra a chave em `/admin/financeiro/pix` (tabela `beach.config_pix`, linha única; todos leem, só admin altera).
+- `src/lib/pix.ts` monta o "Pix copia e cola" estático (BR Code do Banco Central, CRC16) com o valor exato;
+  `src/lib/pix-dados.ts` gera o QR Code em SVG (pacote `qrcode`). Componente: `src/components/pix/pix-cobranca.tsx`.
+- O aluno vê "Pagar com Pix" nas mensalidades em aberto (`/aluno/plano`) e nas locações aceitas (`/aluno/quadras`).
+  A recepção vê o QR na mensalidade e o lembrete de WhatsApp leva o copia e cola.
+- txid: `M` + id da mensalidade, `L` + id da locação. Não há baixa automática: a recepção confere o extrato e registra o pagamento como Pix.

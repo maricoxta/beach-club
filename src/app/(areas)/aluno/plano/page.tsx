@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { PixCobranca } from "@/components/pix/pix-cobranca";
 import { Painel, Selo, Vazio } from "@/components/ui";
 import { DIAS_SEMANA, data, hora, moeda, vezesPorSemana } from "@/lib/formato";
+import { lerConfigPix } from "@/lib/pix-dados";
 import { getSessao } from "@/lib/sessao";
 import { createClient } from "@/lib/supabase/server";
 
@@ -70,7 +72,7 @@ export default async function MeuPlanoPage() {
     .order("data_inicio", { ascending: false });
 
   // Mensalidades (view com valor pago/saldo) e pagamentos; o RLS limita ao próprio aluno.
-  const [{ data: mensRows }, { data: pagRows }] = await Promise.all([
+  const [{ data: mensRows }, { data: pagRows }, configPix] = await Promise.all([
     supabase
       .from("vw_mensalidades")
       .select("id, competencia, vencimento, valor_liquido, valor_pago, saldo, status, vencida")
@@ -84,7 +86,9 @@ export default async function MeuPlanoPage() {
       .not("mensalidade_id", "is", null)
       .order("pago_em", { ascending: false })
       .limit(50),
+    lerConfigPix(),
   ]);
+  const pix = configPix?.ativo ? configPix : null;
   const mensalidades = (mensRows ?? []) as Mensalidade[];
   const pagamentosPor = new Map<string, Pagamento[]>();
   for (const p of (pagRows ?? []) as Pagamento[]) {
@@ -191,6 +195,7 @@ export default async function MeuPlanoPage() {
             <ul className="divide-y divide-areia-100">
               {mensalidades.map((m) => {
                 const pagos = pagamentosPor.get(m.id) ?? [];
+                const pagavel = pix && m.status === "aberta" && Number(m.saldo) > 0;
                 return (
                   <li key={m.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                     <div>
@@ -215,12 +220,27 @@ export default async function MeuPlanoPage() {
                         <Selo cor="sol">Em aberto</Selo>
                       )}
                     </div>
+                    {pagavel && (
+                      <details className="group w-full rounded-2xl border border-verde-600/30 bg-verde-50/40 px-4 py-2">
+                        <summary className="cursor-pointer list-none text-sm font-bold text-verde-700">
+                          <span className="group-open:hidden">Pagar {moeda(m.saldo)} com Pix</span>
+                          <span className="hidden group-open:inline">Fechar Pix</span>
+                        </summary>
+                        <div className="pb-2 pt-3">
+                          <PixCobranca config={pix} valor={Number(m.saldo)} prefixo="M" id={m.id} />
+                        </div>
+                      </details>
+                    )}
                   </li>
                 );
               })}
             </ul>
           )}
-          <p className="mt-3 text-xs text-tinta-suave">Para pagar ou tirar dúvidas, fale com a recepção.</p>
+          <p className="mt-3 text-xs text-tinta-suave">
+            {pix
+              ? "Pague pelo Pix do clube no botão de cada mensalidade. A recepção confirma o pagamento em seguida. Dúvidas, fale com a recepção."
+              : "Para pagar ou tirar dúvidas, fale com a recepção."}
+          </p>
         </Painel>
 
         {encerradas.length > 0 && (

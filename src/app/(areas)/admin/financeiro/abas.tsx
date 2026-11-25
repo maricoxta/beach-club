@@ -7,6 +7,7 @@ const ABAS = [
   { href: "/admin/financeiro", rotulo: "Mensalidades" },
   { href: "/admin/financeiro/inadimplencia", rotulo: "Inadimplência" },
   { href: "/admin/financeiro/relatorio", rotulo: "Relatório mensal" },
+  { href: "/admin/financeiro/pix", rotulo: "Pix do clube" },
 ];
 
 function ativa(pathname: string, href: string) {
