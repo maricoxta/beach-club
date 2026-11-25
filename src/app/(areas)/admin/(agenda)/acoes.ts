@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { mensagemErro } from "@/lib/agenda/erros";
-import { isData } from "@/lib/agenda/datas";
+import { deInputLocal, isData } from "@/lib/agenda/datas";
 import { STATUS_AULA, type StatusAula } from "@/lib/agenda/tipos";
 import type { EstadoAcao } from "@/lib/agenda/acoes-chamada";
 import { isPapel } from "@/lib/papel";
@@ -108,6 +108,27 @@ export async function adicionarAvulso(aulaId: string, _: EstadoAcao, form: FormD
   if (error) return { erro: mensagemErro(error) };
   revalidatePath(`/admin/agenda/aulas/${aulaId}`);
   return { ok: "Aluno adicionado à chamada." };
+}
+
+// ---------------------------------------------------------------- vagas liberadas
+// Quantas vagas de reposição/aula extra abrir numa aula e a partir de quando.
+// O banco confere o limite (vagas livres) e o prazo de 2h.
+export async function liberarVagas(aulaId: string, _: EstadoAcao, form: FormData): Promise<EstadoAcao> {
+  await exigirStaff();
+  const vagas = Number(texto(form, "vagas"));
+  if (!Number.isInteger(vagas) || vagas < 0) return { erro: "Informe o número de vagas." };
+  let liberarEm: string | null = null;
+  if (vagas > 0 && texto(form, "quando") === "agendar") {
+    liberarEm = deInputLocal(texto(form, "liberar_em"));
+    if (!liberarEm) return { erro: "Escolha a data e a hora da liberação." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("liberar_vagas", { p_aula: aulaId, p_vagas: vagas, p_liberar_em: liberarEm });
+  if (error) return { erro: mensagemErro(error) };
+  revalidatePath("/admin/vagas");
+  revalidatePath(`/admin/agenda/aulas/${aulaId}`);
+  if (vagas === 0) return { ok: "Liberação retirada. Os alunos não veem mais esta vaga." };
+  return { ok: liberarEm ? "Liberação agendada. Os alunos recebem o aviso no horário escolhido." : "Vagas liberadas! Os alunos do nível já receberam o aviso no app." };
 }
 
 // ---------------------------------------------------------------- quadras

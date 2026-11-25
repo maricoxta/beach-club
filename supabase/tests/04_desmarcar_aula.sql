@@ -47,6 +47,14 @@ select a.id as livre1b from beach.aulas a join beach.turmas t on t.id=a.turma_id
 -- o seed cria os planos depois da migration: configura a extra do 2x aqui
 update beach.planos set aulas_extras_semana = 1 where nome = '2x';
 select 'extras plano 2x' t, aulas_extras_semana from beach.planos where nome='2x';
+-- a2 entra numa turma de BT Iniciante (só vê vaga do mesmo nível/modalidade)
+insert into beach.turmas (nome, modalidade_id, nivel_id, professor_id, quadra_id, dia_semana, hora_inicio, hora_fim, vagas)
+select 'BT Ter 7h', modalidade_id, nivel_id, professor_id, (select id from beach.quadras where nome='Quadra 2'), 2, '07:00', '08:00', 5
+from beach.turmas where nome like 'BT Iniciante%' limit 1;
+insert into beach.matricula_turmas select m.id, t.id from beach.matriculas m, beach.turmas t where m.aluno_id='00000000-0000-0000-0000-0000000000a2' and t.nome = 'BT Ter 7h';
+-- recepção libera as vagas da turma livre
+select beach.liberar_vagas(:'livre1', 5, null);
+select beach.liberar_vagas(:'livre1b', 5, null);
 
 -- aluno 2 (plano 2x, só no vôlei): usa a aula extra da semana
 set request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","role":"authenticated"}';

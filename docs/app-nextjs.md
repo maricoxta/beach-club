@@ -90,6 +90,17 @@ Configuração necessária no Supabase:
   `beach.alunos_da_turma`, `beach.lista_chamada` e `beach.turmas_ocupacao` (migration `20261124220915_beach_agenda_rpcs`).
 - Datas no fuso `America/Sao_Paulo` (`src/lib/agenda/datas.ts`). Consultas em `src/lib/agenda/consultas.ts`.
 
+### Vagas para reposição e aula extra (liberadas pela recepção)
+
+- `/admin/vagas`: aulas com vaga livre nos próximos 7/14/30 dias. Para cada uma a recepção escolhe quantas vagas
+  liberar (até as livres) e quando os alunos passam a ver (agora ou data/hora, com atalhos 1 semana / 2 dias / 1 dia
+  antes). O mesmo formulário aparece no detalhe da aula. RPCs `beach.liberar_vagas` e `beach.painel_vagas`.
+- O aluno só vê e reserva vagas liberadas, em turmas da **mesma modalidade e nível** em que está matriculado
+  (`beach.vagas_para_reposicao`, `beach.reservar_reposicao`). Quem reservar primeiro leva (trava na turma).
+- `/aluno/avisos`: avisos "vaga disponível na turma X com o professor Y" calculados na leitura (`beach.meus_avisos`),
+  sem agendador. O menu mostra "Avisos (n)" e o início do aluno mostra um destaque; abrir a página marca como lidos.
+- Migration `20261125013000_beach_liberacao_vagas`, teste `supabase/tests/07_liberacao_vagas.sql`.
+
 ## Calendário de frequência do aluno
 
 | Rota | Quem | O que faz |

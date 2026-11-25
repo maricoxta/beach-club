@@ -65,8 +65,8 @@ export function BotaoCancelarReserva({ aulaId }: { aulaId: string }) {
   );
 }
 
-export function BotaoReservar({ aulaId }: { aulaId: string }) {
+export function BotaoReservar({ aulaId, rotulo = "Reservar" }: { aulaId: string; rotulo?: string }) {
   return (
-    <BotaoAcao rotulo="Reservar" acao={() => reservarAula(aulaId)} estilo="bg-verde-700 text-white hover:bg-verde-800" />
+    <BotaoAcao rotulo={rotulo} acao={() => reservarAula(aulaId)} estilo="bg-verde-700 text-white hover:bg-verde-800" />
   );
 }

@@ -83,3 +83,26 @@ export function horaMenos(hora: string, horas: number) {
 export function agora(): number {
   return Date.now();
 }
+
+// timestamptz -> "2026-11-28T18:00" no fuso do clube (valor de <input type="datetime-local">).
+export function paraInputLocal(iso: string): string {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: FUSO, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    }).formatToParts(new Date(iso)).map((x) => [x.type, x.value]),
+  );
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+
+// "2026-11-28T18:00" (horário do clube) -> ISO com fuso, para o banco.
+export function deInputLocal(valor: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(valor)) return null;
+  return `${valor}:00-03:00`;
+}
+
+// "sex., 28/11 às 18h"
+export function formatarDataHora(iso: string): string {
+  const local = paraInputLocal(iso);
+  const [data, hora] = local.split("T");
+  return `${DIAS_SEMANA[diaSemanaIso(data)].curto.toLowerCase()}, ${formatarData(data)} às ${formatarHora(hora)}`;
+}

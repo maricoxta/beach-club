@@ -55,7 +55,7 @@ export default async function ReposicaoPage() {
       <LinkVoltar href="/aluno/agenda">Minha agenda</LinkVoltar>
       <Cabecalho
         titulo="Reposição e aula extra"
-        subtitulo="Aulas de outras turmas com vaga livre nas próximas 3 semanas, até 2 horas antes do início."
+        subtitulo="Vagas liberadas pela recepção em outras turmas da sua modalidade e nível, nas próximas 3 semanas. Reserve até 2 horas antes; quem reservar primeiro fica com a vaga."
       />
 
       <div className="mb-8 grid gap-3 sm:grid-cols-2">
@@ -94,7 +94,7 @@ export default async function ReposicaoPage() {
       {vagas.length === 0 ? (
         <Vazio>
           {extrasPorSemana > 0 || creditos.length > 0
-            ? "Nenhuma vaga livre em outras turmas da sua modalidade por enquanto. Volte mais tarde: vagas abrem quando alguém desmarca."
+            ? "Nenhuma vaga liberada por enquanto. Quando a recepção abrir uma vaga na sua modalidade e nível, você recebe um aviso no app."
             : "Você não tem aula extra nem crédito de reposição no momento."}
         </Vazio>
       ) : (
@@ -110,7 +110,7 @@ export default async function ReposicaoPage() {
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-display text-lg font-semibold text-verde-900">{faixaHorario(v.hora_inicio, v.hora_fim)}</span>
                       <span className="rounded-full bg-verde-50 px-2.5 py-0.5 text-xs font-bold text-verde-700">
-                        {v.vagas_livres} vaga{v.vagas_livres === 1 ? "" : "s"}
+                        {v.vagas_livres} vaga{v.vagas_livres === 1 ? "" : "s"} liberada{v.vagas_livres === 1 ? "" : "s"}
                       </span>
                     </div>
                     <p className="font-semibold text-tinta">{v.turma}</p>
