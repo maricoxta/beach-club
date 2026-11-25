@@ -101,3 +101,18 @@ Configuração necessária no Supabase:
 - Tabela `beach.atividades` + view `beach.vw_frequencia_resumo` (migration `20261124234031_beach_frequencia`). RLS: aluno lê/cria/edita/apaga só as próprias; staff lê todas; professor não vê.
 - Fotos no bucket privado `beach-atividades` do Storage, caminho `<aluno_id>/<uuid>.jpg`. O navegador reduz a foto (máx. 1280 px, JPEG) e envia direto ao Storage; a Server Action recebe só o caminho. As páginas exibem com URL assinada de 1 h.
 - Código: `src/lib/frequencia*.ts`, `src/components/frequencia/`.
+
+## Financeiro
+
+| Rota | Quem | O que faz |
+| --- | --- | --- |
+| `/admin/financeiro` | admin, recepção | Mensalidades do mês (`?mes=AAAA-MM`): previsto, recebido, em aberto e vencido; botão **Gerar** (chama `beach.gerar_mensalidades`, idempotente) com aviso de quantas matrículas ativas ainda não têm mensalidade; busca e filtro por situação. |
+| `/admin/financeiro/mensalidades/[id]` | admin, recepção | Detalhe: pagamentos, **Registrar pagamento** (valor, forma, data; valor menor que o saldo fica parcial), ajuste de vencimento/valor/desconto, cancelar/reabrir, lembrete no WhatsApp. Estorno de pagamento só para admin. |
+| `/admin/financeiro/inadimplencia` | admin, recepção | `beach.vw_inadimplencia`: alunos com mensalidade vencida, meses em aberto, dias de atraso e link de cobrança no WhatsApp. |
+| `/admin/financeiro/relatorio` | admin, recepção | `beach.vw_relatorio_mensal` + quadros por modalidade, por plano e por forma de pagamento, e histórico de 6 meses. |
+
+- Não precisou de migration: tabelas, trigger de status (pagamentos → mensalidade paga/aberta), RPC e views já estavam em `20261124203240_beach_financeiro`.
+- Regimes: previsto, em aberto e os quadros por modalidade/plano usam a **competência**; "recebido no mês" e formas de pagamento usam **caixa** (`pagamentos.pago_em`).
+- Datas de pagamento do formulário são gravadas ao meio-dia de Brasília (`pagoEmDaData`) para não mudar de dia por fuso.
+- Gancho da locação: o relatório já lê `beach.locacoes` (reservas e horas do mês) e `pagamentos.locacao_id` (recebido). Quando o módulo de locação registrar o pagamento de uma reserva em `beach.pagamentos` com `locacao_id`, a receita aparece sozinha.
+- Código: `src/app/(areas)/admin/financeiro/`, `src/lib/financeiro.ts`, `src/components/financeiro/ui.tsx`.
