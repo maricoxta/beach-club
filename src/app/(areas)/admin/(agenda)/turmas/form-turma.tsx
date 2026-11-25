@@ -77,11 +77,8 @@ export function FormTurma({
       </label>
       <label className="flex flex-col gap-1 text-sm font-semibold">
         Início
-        <input name="hora_inicio" type="time" step={900} required defaultValue={v?.hora_inicio?.slice(0, 5)} className={classeCampo} />
-      </label>
-      <label className="flex flex-col gap-1 text-sm font-semibold">
-        Término
-        <input name="hora_fim" type="time" step={900} required defaultValue={v?.hora_fim?.slice(0, 5)} className={classeCampo} />
+        <input name="hora_inicio" type="time" step={900} min="05:00" max="22:00" required defaultValue={v?.hora_inicio?.slice(0, 5)} className={classeCampo} />
+        <span className="text-xs font-normal text-tinta-suave">Todas as aulas têm 1 hora.</span>
       </label>
 
       <div className="flex flex-col gap-3 sm:col-span-2">

@@ -8,13 +8,13 @@ create or replace function pg_temp.conferir(ok boolean, rotulo text) returns tex
   select case when ok then 'ok: ' else 'FALHOU: ' end || rotulo $f$;
 set role authenticated;
 
--- recepção cria turma BT Iniciante (2 vagas) e uma BT Avançado
+-- recepção cria turma BT Iniciante (2 vagas) e uma BT Nível C
 set request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000e","role":"authenticated"}';
 insert into beach.turmas (nome, modalidade_id, nivel_id, professor_id, quadra_id, dia_semana, hora_inicio, hora_fim, vagas)
 select 'BT Inic Qui 9h', modalidade_id, nivel_id, professor_id, (select id from beach.quadras where nome='Quadra 1'), 4, '09:00', '10:00', 2
 from beach.turmas where nome like 'BT Iniciante%' limit 1;
 insert into beach.turmas (nome, modalidade_id, nivel_id, professor_id, quadra_id, dia_semana, hora_inicio, hora_fim, vagas)
-select 'BT Avanç Qui 11h', modalidade_id, (select id from beach.niveis where nome='Avançado'), professor_id, (select id from beach.quadras where nome='Quadra 1'), 4, '11:00', '12:00', 4
+select 'BT Avanç Qui 11h', modalidade_id, (select id from beach.niveis where nome='Nível C'), professor_id, (select id from beach.quadras where nome='Quadra 1'), 4, '11:00', '12:00', 4
 from beach.turmas where nome like 'BT Iniciante%' limit 1;
 select beach.gerar_aulas(current_date + 1, current_date + 21) >= 0 as gerou;
 select a.id as aula_x from beach.aulas a join beach.turmas t on t.id=a.turma_id where t.nome='BT Inic Qui 9h' and a.data > current_date + 7 order by a.data limit 1 \gset
@@ -64,7 +64,7 @@ select pg_temp.conferir(situacao = 'esgotada', 'aviso de a1 vira esgotada') from
 -- outro nível: a1 não recebe nem reserva
 set request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000e","role":"authenticated"}';
 select beach.liberar_vagas(:'aula_av', 2, null);
-select pg_temp.conferir(alunos_avisados = 0, 'ninguém é do BT Avançado') from beach.painel_vagas(current_date, current_date + 21) where aula_id = :'aula_av';
+select pg_temp.conferir(alunos_avisados = 0, 'ninguém é do BT Nível C') from beach.painel_vagas(current_date, current_date + 21) where aula_id = :'aula_av';
 set request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}';
 select pg_temp.conferir(count(*) = 0, 'a1 não recebe aviso de outro nível') from beach.meus_avisos() where aula_id = :'aula_av';
 select pg_temp.esperar_erro(format('select beach.reservar_reposicao(%L)', :'aula_av'), 'reservar outro nível');

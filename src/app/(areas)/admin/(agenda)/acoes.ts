@@ -19,6 +19,13 @@ async function exigirStaff() {
   return perfil;
 }
 
+// Todas as aulas têm 1 hora: o término é calculado a partir do início ("18:30" -> "19:30").
+function maisUmaHora(inicio: string): string {
+  const m = /^(\d{2}):(\d{2})/.exec(inicio);
+  if (!m || Number(m[1]) > 22) return "";
+  return `${String(Number(m[1]) + 1).padStart(2, "0")}:${m[2]}`;
+}
+
 function texto(form: FormData, campo: string) {
   return String(form.get(campo) ?? "").trim();
 }
@@ -34,12 +41,12 @@ export async function salvarTurma(id: string | null, _: EstadoAcao, form: FormDa
     quadra_id: texto(form, "quadra_id"),
     dia_semana: Number(form.get("dia_semana")),
     hora_inicio: texto(form, "hora_inicio"),
-    hora_fim: texto(form, "hora_fim"),
+    hora_fim: maisUmaHora(texto(form, "hora_inicio")),
     vagas: Number(form.get("vagas")),
   };
   if (Object.values(dados).some((v) => v === "" || Number.isNaN(v))) return { erro: "Preencha todos os campos." };
   if (dados.dia_semana < 1 || dados.dia_semana > 7) return { erro: "Dia da semana inválido." };
-  if (dados.hora_fim <= dados.hora_inicio) return { erro: "O horário de término precisa ser depois do início." };
+  if (!dados.hora_fim) return { erro: "Escolha um início entre 5h e 22h (as aulas têm 1 hora)." };
   if (!Number.isInteger(dados.vagas) || dados.vagas < 1) return { erro: "Informe ao menos 1 vaga." };
 
   const supabase = await createClient();
