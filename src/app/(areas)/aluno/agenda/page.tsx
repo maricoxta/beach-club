@@ -6,7 +6,7 @@ import { listarAulas, listarTurmas, minhasReservas, ordenarAulas, turmasDoAluno 
 import { agora, DIAS_SEMANA, diaSemanaIso, faixaHorario, formatarData, formatarHora, HORAS_ANTECEDENCIA_DESMARCAR, hoje, horaMenos, prazoDesmarcar, somarDias } from "@/lib/agenda/datas";
 import { rotuloPresenca, type StatusPresenca } from "@/lib/agenda/tipos";
 import { getSessao } from "@/lib/sessao";
-import { BotaoCancelarReserva, BotaoDesmarcar } from "./botao-desmarcar";
+import { BotaoCancelarReserva, BotaoCheckin, BotaoDesmarcar } from "./botao-desmarcar";
 import { createClient } from "@/lib/supabase/server";
 
 export const instant = false;
@@ -50,9 +50,14 @@ export default async function MinhaAgendaPage() {
   const aulas = ordenarAulas([...aulasTurmas, ...aulasReservadas]);
 
   // Minhas marcações nas próximas aulas (desmarcadas por mim ficam como falta justificada).
-  const { data: futuras } = aulas.length
-    ? await supabase.from("presencas").select("aula_id, status, observacao").eq("aluno_id", perfil.id).in("aula_id", aulas.map((a) => a.id))
-    : { data: [] };
+  const idsAulas = aulas.map((a) => a.id);
+  const [{ data: futuras }, { data: checkins }] = aulas.length
+    ? await Promise.all([
+        supabase.from("presencas").select("aula_id, status, observacao").eq("aluno_id", perfil.id).in("aula_id", idsAulas),
+        supabase.from("checkins").select("aula_id").eq("aluno_id", perfil.id).in("aula_id", idsAulas),
+      ])
+    : [{ data: [] }, { data: [] }];
+  const comCheckin = new Set(((checkins ?? []) as { aula_id: string }[]).map((c) => c.aula_id));
   const marcacao = new Map(((futuras ?? []) as { aula_id: string; status: string; observacao: string | null }[]).map((p) => [p.aula_id, p]));
   const instante = agora();
 
@@ -130,6 +135,16 @@ export default async function MinhaAgendaPage() {
                             Você desmarcou esta aula
                           </p>
                         )}
+                        {podeMexer && !desmarcada && (
+                          <BotaoCheckin
+                            aulaId={a.id}
+                            feito={comCheckin.has(a.id)}
+                            prazo={`${formatarData(a.data)} às ${formatarHora(horaMenos(a.turma?.hora_inicio ?? "00:00:00", HORAS_ANTECEDENCIA_DESMARCAR))}`}
+                          />
+                        )}
+                        {!podeMexer && comCheckin.has(a.id) && !desmarcada && (
+                          <p className="rounded-2xl bg-verde-50 px-3 py-1.5 text-center text-xs font-bold text-verde-700">Check-in feito ✓</p>
+                        )}
                         {podeMexer && (
                           <BotaoDesmarcar
                             aulaId={a.id}
@@ -145,7 +160,7 @@ export default async function MinhaAgendaPage() {
             </div>
           )}
           <p className="mt-3 text-xs text-tinta-suave">
-            Não vai conseguir ir? Desmarque até 2 horas antes do início. A vaga fica livre para outro aluno, conta como falta
+            Vai à aula? Faça o check-in até 2 horas antes para o professor saber quem vem. Não vai conseguir ir? Desmarque até 2 horas antes do início. A vaga fica livre para outro aluno, conta como falta
             justificada e vira um crédito para repor em outra turma da mesma modalidade em até 30 dias.
           </p>
         </section>

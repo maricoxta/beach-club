@@ -6,6 +6,7 @@ import { Vazio } from "@/components/agenda/ui";
 import { listarAulas } from "@/lib/agenda/consultas";
 import { DIAS_SEMANA, diaSemanaIso, formatarData, formatarDataLonga, hoje, somarDias } from "@/lib/agenda/datas";
 import { getSessao } from "@/lib/sessao";
+import { createClient } from "@/lib/supabase/server";
 
 // Lê a sessão (cookies) a cada request: a rota bloqueia no servidor em vez de ter shell estático.
 export const instant = false;
@@ -17,6 +18,21 @@ export default async function ProfessorPage() {
   const dia = hoje();
   // Aulas onde ele é o professor da aula (inclui substituições).
   const aulas = perfil ? await listarAulas({ de: dia, ate: somarDias(dia, 7), professorId: perfil.id }) : [];
+  // Check-ins por aula (o RLS devolve só os das aulas dele).
+  const supabase = await createClient();
+  const { data: checkins } = aulas.length
+    ? await supabase.from("checkins").select("aula_id").in("aula_id", aulas.map((a) => a.id))
+    : { data: [] };
+  const nCheckins = new Map<string, number>();
+  for (const c of (checkins ?? []) as { aula_id: string }[]) nCheckins.set(c.aula_id, (nCheckins.get(c.aula_id) ?? 0) + 1);
+  const seloCheckin = (id: string) => {
+    const n = nCheckins.get(id) ?? 0;
+    return (
+      <p className={`text-xs font-semibold ${n ? "text-verde-700" : "text-tinta-suave"}`}>
+        {n ? `${n} check-in${n > 1 ? "s" : ""}` : "Nenhum check-in ainda"}
+      </p>
+    );
+  };
   const deHoje = aulas.filter((a) => a.data === dia);
   const proximas = aulas.filter((a) => a.data !== dia);
   const pendentes = deHoje.filter((a) => a.status === "agendada").length;
@@ -39,6 +55,7 @@ export default async function ProfessorPage() {
             {deHoje.map((a) => (
               <div key={a.id} className="flex flex-col gap-2">
                 <CartaoAula aula={a} href={`/professor/aulas/${a.id}`} mostrarProfessor={false} />
+                {a.status === "agendada" && seloCheckin(a.id)}
                 {a.status === "agendada" && (
                   <Link
                     href={`/professor/aulas/${a.id}`}
@@ -65,6 +82,7 @@ export default async function ProfessorPage() {
                   {DIAS_SEMANA[diaSemanaIso(a.data)].curto} {formatarData(a.data)}
                 </p>
                 <CartaoAula aula={a} href={`/professor/aulas/${a.id}`} mostrarProfessor={false} />
+                {a.status === "agendada" && <div className="mt-1">{seloCheckin(a.id)}</div>}
               </div>
             ))}
           </div>

@@ -53,3 +53,35 @@ export async function marcarAvisosLidos(): Promise<void> {
   if (error) console.error("[agenda] marcar_avisos_lidos:", error.code, error.message);
   else revalidatePath("/aluno", "layout");
 }
+
+// Check-in: o aluno confirma que vai à aula (até 2h antes). O banco confere turma e prazo.
+export async function alternarCheckin(aulaId: string, fazer: boolean): Promise<EstadoAcao> {
+  const { perfil } = await getSessao();
+  if (!perfil || perfil.papel !== "aluno") return { erro: "Apenas alunos fazem check-in." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc(fazer ? "fazer_checkin" : "desfazer_checkin", { p_aula: aulaId });
+  if (error) {
+    console.error("[agenda] checkin:", error.code, error.message);
+    return { erro: ["P0001", "23514", "42501"].includes(error.code) ? error.message : "Não foi possível salvar. Tente de novo." };
+  }
+  revalidatePath("/aluno/agenda");
+  revalidatePath("/aluno");
+  return { ok: fazer ? "Check-in feito! O professor já sabe que você vai." : "Check-in desfeito." };
+}
+
+// Avaliação anônima da aula (1 a 5 + comentário opcional).
+export async function avaliarAula(aulaId: string, _: EstadoAcao, form: FormData): Promise<EstadoAcao> {
+  const { perfil } = await getSessao();
+  if (!perfil || perfil.papel !== "aluno") return { erro: "Apenas alunos avaliam aulas." };
+  const nota = Number(form.get("nota"));
+  if (!Number.isInteger(nota) || nota < 1 || nota > 5) return { erro: "Escolha de 1 a 5 estrelas." };
+  const comentario = String(form.get("comentario") ?? "").trim().slice(0, 1000);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("avaliar_aula", { p_aula: aulaId, p_nota: nota, p_comentario: comentario || null });
+  if (error) {
+    console.error("[agenda] avaliar_aula:", error.code, error.message);
+    return { erro: ["P0001", "23514", "42501"].includes(error.code) ? error.message : "Não foi possível salvar. Tente de novo." };
+  }
+  revalidatePath("/aluno");
+  return { ok: "Obrigado! Sua avaliação é anônima." };
+}

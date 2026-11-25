@@ -82,7 +82,7 @@ Configuração necessária no Supabase:
 | Admin/recepção | `/admin/agenda` | Semana de aulas, botão "Gerar aulas" (chama `beach.gerar_aulas`), detalhe da aula em `/admin/agenda/aulas/[id]` com chamada, cancelamento, professor substituto, troca de quadra e reposição/avulso |
 | Admin/recepção | `/admin/turmas`, `/admin/turmas/nova`, `/admin/turmas/[id]` | Turmas (horário semanal fixo) com ocupação de vagas, alunos e próximas aulas |
 | Admin/recepção | `/admin/quadras`, `/admin/equipe` | Cadastro de quadras e mudança de papel (aluno → professor/recepção/admin) |
-| Professor | `/professor`, `/professor/turmas`, `/professor/aulas/[id]` | Aulas de hoje e dos próximos 7 dias, turmas com alunos, chamada |
+| Professor | `/professor`, `/professor/turmas`, `/professor/aulas/[id]`, `/professor/alunos`, `/professor/avaliacoes` | Aulas de hoje e dos próximos 7 dias, check-in, chamada, avaliação mensal dos alunos e notas das aulas |
 | Aluno | `/aluno`, `/aluno/agenda` | Próximas aulas, horários fixos e frequência |
 
 - Fluxo: cadastre quadras → promova professores em Equipe → crie turmas → gere as aulas (idempotente) → matricule alunos → chamada.
@@ -101,6 +101,21 @@ Configuração necessária no Supabase:
   sem agendador. O menu mostra "Avisos (n)" e o início do aluno mostra um destaque; abrir a página marca como lidos.
 - Migration `20261125013000_beach_liberacao_vagas`, teste `supabase/tests/07_liberacao_vagas.sql`.
 - Aviso de desmarcação: quando um aluno desmarca, a recepção vê "Agenda e turmas (n)" no menu, destaque no painel e a lista em `/admin/vagas` com "Liberar vaga" (+1 vaga liberada agora, `beach.liberar_desmarcacao`) ou "Não liberar" (`beach.manter_desmarcacao`). Salvar uma liberação pelo formulário depois da desmarcação também conta como decisão. Migration `20261125021000_beach_aviso_desmarcacao`, teste `08_aviso_desmarcacao.sql`.
+
+### Check-in e avaliações
+
+- Check-in: o aluno confirma presença em `/aluno/agenda` até 2h antes (`beach.fazer_checkin` / `beach.desfazer_checkin`).
+  Reposição e aula extra já contam como confirmadas; desmarcação prevalece. O professor vê confirmados / sem check-in /
+  desmarcaram na tela da aula (`beach.lista_checkin`) e a contagem em `/professor`.
+- Avaliação mensal do aluno: em `/professor/alunos` o professor dá de 1 a 5 estrelas sobre o desempenho no nível da turma
+  + comentário (mín. 20 caracteres). Uma por aluno/modalidade/mês (`beach.avaliacoes_aluno`, `beach.avaliar_aluno`,
+  `beach.alunos_para_avaliar`); o autor pode corrigir no mesmo mês. O aluno vê a dele no início.
+- Trava de nível: o trigger `matricula_turmas_nivel` só deixa colocar o aluno numa turma de nível acima do que ele já teve
+  na modalidade se a última avaliação for 5 estrelas. Primeira turma na modalidade entra em qualquer nível.
+- Avaliação da aula pelo aluno: anônima, 1 a 5 + comentário, até 7 dias depois (`beach.avaliar_aula`). A nota fica em
+  `avaliacoes_aula` sem aluno; `avaliacoes_aula_feitas` só impede repetir. Professor vê em `/professor/avaliacoes`,
+  recepção em `/admin/avaliacoes` (com aptos a subir de nível).
+- Migration `20261125023000_beach_checkin_avaliacoes`, teste `09_checkin_avaliacoes.sql`.
 
 ## Calendário de frequência do aluno
 
