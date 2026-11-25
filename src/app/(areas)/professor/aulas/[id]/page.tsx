@@ -5,6 +5,8 @@ import { Cartao, Etiqueta, LinkVoltar, SeloStatus } from "@/components/agenda/ui
 import { salvarChamada } from "@/lib/agenda/acoes-chamada";
 import { buscarAula, listaChamada } from "@/lib/agenda/consultas";
 import { faixaHorario, formatarDataLonga } from "@/lib/agenda/datas";
+import { ListaCheckin, type ItemCheckin } from "@/components/agenda/lista-checkin";
+import { createClient } from "@/lib/supabase/server";
 
 export const instant = false;
 export const metadata: Metadata = { title: "Chamada" };
@@ -14,7 +16,13 @@ export default async function ChamadaProfessorPage({ params }: PageProps<"/profe
   // O RLS só devolve aulas do próprio professor; de outro professor vira 404.
   const aula = await buscarAula(id);
   if (!aula || !aula.turma) notFound();
-  const lista = aula.status === "cancelada" ? [] : await listaChamada(id);
+  const supabase = await createClient();
+  const [lista, checkinRes] = await Promise.all([
+    aula.status === "cancelada" ? Promise.resolve([]) : listaChamada(id),
+    supabase.rpc("lista_checkin", { p_aula: id }),
+  ]);
+  if (checkinRes.error) console.error("[agenda] lista_checkin:", checkinRes.error.code, checkinRes.error.message);
+  const checkin = (checkinRes.data ?? []) as ItemCheckin[];
   const t = aula.turma;
 
   return (
@@ -30,6 +38,13 @@ export default async function ChamadaProfessorPage({ params }: PageProps<"/profe
       </div>
       {aula.observacao && <p className="mb-4 text-sm text-tinta-suave">Obs.: {aula.observacao}</p>}
 
+      {aula.status !== "cancelada" && checkin.length > 0 && (
+        <div className="mb-6">
+          <ListaCheckin lista={checkin} linkAvaliar="/professor/alunos" />
+        </div>
+      )}
+
+      <h2 className="mb-3 font-display text-xl font-semibold text-verde-900">Chamada</h2>
       {aula.status === "cancelada" ? (
         <Cartao>Esta aula foi cancelada pela recepção.</Cartao>
       ) : lista.length === 0 ? (
