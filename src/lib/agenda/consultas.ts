@@ -2,13 +2,14 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { Aula, ItemChamada, Opcao, Turma } from "./tipos";
 
-// Embeds do PostgREST. As FKs são únicas por par de tabelas, então os nomes resolvem sem ambiguidade.
+// Embeds do PostgREST. perfis vai com o nome da coluna: beach.avisos_lidos (aluno_id, aula_id) cria um
+// segundo caminho aulas<->perfis e o embed sem dica dá PGRST201.
 export const SELECT_TURMA =
   "id, nome, dia_semana, hora_inicio, hora_fim, vagas, ativo, modalidade_id, nivel_id, professor_id, quadra_id," +
-  " modalidade:modalidades(nome), nivel:niveis(nome), professor:perfis(nome), quadra:quadras(nome)";
+  " modalidade:modalidades(nome), nivel:niveis(nome), professor:perfis!professor_id(nome), quadra:quadras(nome)";
 
 export const SELECT_AULA =
-  `id, data, status, observacao, turma_id, professor_id, quadra_id, professor:perfis(nome), quadra:quadras(nome), turma:turmas(${SELECT_TURMA})`;
+  `id, data, status, observacao, turma_id, professor_id, quadra_id, professor:perfis!professor_id(nome), quadra:quadras(nome), turma:turmas(${SELECT_TURMA})`;
 
 function falha(contexto: string, error: { code?: string; message: string }): never {
   console.error(`[agenda] ${contexto}:`, error.code, error.message);
