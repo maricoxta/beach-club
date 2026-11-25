@@ -101,7 +101,13 @@ export async function listarQuadras(): Promise<Quadra[]> {
   return (data ?? []).map((q) => ({ ...q, valor_hora: Number(q.valor_hora) }));
 }
 
-export async function listarLocacoes(filtro: { de: string; ate: string; incluirCanceladas?: boolean; quadraId?: string }) {
+export async function listarLocacoes(filtro: {
+  de: string;
+  ate: string;
+  incluirCanceladas?: boolean;
+  quadraId?: string;
+  status?: StatusLocacao;
+}) {
   const supabase = await createClient();
   let q = supabase
     .from("locacoes")
@@ -110,6 +116,7 @@ export async function listarLocacoes(filtro: { de: string; ate: string; incluirC
     .lt("inicio", instante(somarDias(filtro.ate, 1), 0));
   if (!filtro.incluirCanceladas) q = q.neq("status", "cancelada");
   if (filtro.quadraId) q = q.eq("quadra_id", filtro.quadraId);
+  if (filtro.status) q = q.eq("status", filtro.status);
   const { data, error } = await q.order("inicio");
   if (error) falha("as locações", error);
   return (data as unknown as Linha[]).map(mapear);
@@ -144,6 +151,22 @@ export async function ocupacaoTurmas(de: string, ate: string): Promise<OcupacaoT
   return resultado;
 }
 
+// Pedidos de alunos ainda sem resposta (futuros).
+export async function contarPedidosPendentes() {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("locacoes")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "solicitada")
+    .gte("inicio", new Date().toISOString());
+  if (error) {
+    // Antes da migration 20261125001500 o status não existe: não derruba a grade.
+    console.error("[locacoes] pedidos pendentes:", error.code, error.message);
+    return 0;
+  }
+  return count ?? 0;
+}
+
 export async function listarAlunosAtivos() {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -154,4 +177,29 @@ export async function listarAlunosAtivos() {
     .order("nome");
   if (error) falha("os alunos", error);
   return (data ?? []) as { id: string; nome: string; telefone: string | null }[];
+}
+
+// ---------------------------------------------------------------- área do aluno
+
+// Locações do aluno logado a partir de uma data (RLS: só as próprias).
+export async function listarMinhasLocacoes(alunoId: string, desde: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("locacoes")
+    .select(SELECT_LOCACAO)
+    .eq("cliente_id", alunoId)
+    .gte("inicio", instante(desde, 0))
+    .order("inicio");
+  if (error) falha("suas locações", error);
+  return (data as unknown as Linha[]).map(mapear);
+}
+
+export type Ocupado = { quadra_id: string; data: string; inicio_min: number; fim_min: number; tipo: "aula" | "locacao" };
+
+// Horários ocupados sem dados de clientes (RPC beach.horarios_ocupados), para o aluno.
+export async function horariosOcupados(de: string, ate: string): Promise<Ocupado[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("horarios_ocupados", { p_de: de, p_ate: ate });
+  if (error) falha("os horários das quadras", error);
+  return (data ?? []) as Ocupado[];
 }

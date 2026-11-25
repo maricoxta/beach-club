@@ -17,14 +17,28 @@ export const rotuloForma: Record<FormaPagamento, string> = {
   transferencia: "Transferência",
 };
 
-export const STATUS_LOCACAO = ["reservada", "confirmada", "concluida", "cancelada"] as const;
+export const STATUS_LOCACAO = ["solicitada", "reservada", "confirmada", "concluida", "cancelada"] as const;
 export type StatusLocacao = (typeof STATUS_LOCACAO)[number];
 export const rotuloStatus: Record<StatusLocacao, string> = {
+  solicitada: "Pedido do aluno",
   reservada: "Reservada",
   confirmada: "Confirmada",
   concluida: "Concluída",
   cancelada: "Cancelada",
 };
+
+// Como o aluno vê o status da própria locação.
+export const rotuloStatusAluno: Record<StatusLocacao, string> = {
+  solicitada: "Aguardando confirmação",
+  reservada: "Reservada",
+  confirmada: "Confirmada",
+  concluida: "Concluída",
+  cancelada: "Cancelada",
+};
+
+// Antecedência e limites do pedido do aluno (iguais a beach.solicitar_locacao).
+export const ANTECEDENCIA_PEDIDO_H = 2;
+export const DIAS_PEDIDO = 30;
 
 export type SituacaoPagamento = "pago" | "parcial" | "a_pagar" | "sem_custo";
 export const rotuloPagamento: Record<SituacaoPagamento, string> = {

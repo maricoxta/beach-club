@@ -119,4 +119,20 @@ Configuração necessária no Supabase:
   é calculada somando os pagamentos contra `valor_total`; não há coluna de status de pagamento. Para o relatório
   mensal, `beach.vw_relatorio_mensal.recebido_locacoes` já soma esses pagamentos pelo mês de `pago_em`.
 - Faixa da grade: 6h às 23h (`HORA_ABRE`/`HORA_FECHA` em `src/lib/locacoes/regras.ts`). Código: `src/lib/locacoes/`.
-- Aluno ainda não pede locação pelo app: o RLS só deixa staff inserir em `beach.locacoes`.
+
+### Pedido de locação pelo aluno
+
+| Rota | Quem | O que faz |
+| --- | --- | --- |
+| `/aluno/quadras` | aluno | Minhas locações (status, cancelar) e grade de horários livres dos próximos 14 dias. |
+| `/aluno/quadras/pedir` | aluno | Confirma o pedido: duração (até o próximo horário ocupado), valor estimado e recado. |
+
+- Migration `20261125001236_beach_locacao_aluno`: status `solicitada` em `beach.status_locacao` (pedido aguardando a
+  recepção; bloqueia o horário como qualquer locação não cancelada) e as RPCs `beach.horarios_ocupados(de, ate)` (sem dados
+  de clientes), `beach.solicitar_locacao(quadra, data, hora, horas, obs)` e `beach.cancelar_minha_locacao(id)`.
+  O RLS de `beach.locacoes` continua só staff para insert/update; o aluno passa pelas RPCs.
+- Regras no banco: 2 h de antecedência, até 30 dias, 1 a 4 h, 6h às 23h, no máximo 2 pedidos pendentes por aluno.
+  O aluno cancela o próprio pedido a qualquer momento e uma locação confirmada até 2 h antes, se não houver pagamento.
+- Recepção: a grade mostra o pedido tracejado em amarelo e um aviso "N pedidos aguardando"; no detalhe, **Aprovar pedido**
+  (vira `confirmada`) ou **Recusar pedido** (vira `cancelada`). Filtro "Pedidos de alunos" em Reservas e pagamentos.
+- Teste local: `supabase/tests/06_locacao_aluno.sql`.
