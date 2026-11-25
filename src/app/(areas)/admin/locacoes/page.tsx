@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Cabecalho, classeBotao, classeBotaoSecundario, Vazio } from "@/components/agenda/ui";
 import { agora, DIAS_SEMANA, diaSemanaIso, diasDaSemana, formatarData, formatarDataLonga, hoje, inicioDaSemana, isData, somarDias } from "@/lib/agenda/datas";
 import { moeda } from "@/lib/formato";
-import { listarLocacoes, listarQuadras, ocupacaoTurmas, type Locacao, type OcupacaoTurma } from "@/lib/locacoes/dados";
+import { contarPedidosPendentes, listarLocacoes, listarQuadras, ocupacaoTurmas, type Locacao, type OcupacaoTurma } from "@/lib/locacoes/dados";
 import { HORA_ABRE, HORA_FECHA, horaMin, instante } from "@/lib/locacoes/regras";
 import { SeloPagamento, SeloStatusLocacao } from "./selos";
 
@@ -21,7 +21,9 @@ function Celula({ ctx, data, quadraId, h }: { ctx: Contexto; data: string; quadr
   if (loc) {
     const primeira = loc.ini >= ini || h === HORA_ABRE;
     const cor =
-      loc.pagamento === "a_pagar"
+      loc.status === "solicitada"
+        ? "border-2 border-dashed border-sol-500 bg-sol-400/15 text-verde-900"
+        : loc.pagamento === "a_pagar"
         ? "border-erro/30 bg-erro/10 text-erro"
         : loc.pagamento === "parcial"
           ? "border-sol-400 bg-sol-400/25 text-verde-900"
@@ -35,7 +37,9 @@ function Celula({ ctx, data, quadraId, h }: { ctx: Contexto; data: string; quadr
         {primeira ? (
           <>
             <span className="truncate font-bold">{loc.cliente}</span>
-            <span className="truncate font-normal opacity-80">Locação · {loc.horas}h</span>
+            <span className="truncate font-normal opacity-80">
+              {loc.status === "solicitada" ? "Pedido do aluno" : "Locação"} · {loc.horas}h
+            </span>
           </>
         ) : (
           <span className="opacity-70">↳ {loc.cliente.split(" ")[0]}</span>
@@ -132,6 +136,7 @@ function Legenda() {
       {item("bg-verde-50 border border-verde-600/30", "Locação paga")}
       {item("bg-sol-400/40", "Pago em parte")}
       {item("bg-erro/15", "A pagar")}
+      {item("border-2 border-dashed border-sol-500", "Pedido de aluno (aguardando)")}
     </div>
   );
 }
@@ -161,9 +166,10 @@ export default async function LocacoesPage({ searchParams }: PageProps<"/admin/l
   const quadraSel = quadras.find((q) => q.id === sp.quadra) ?? quadras[0];
   const de = semana ? inicioDaSemana(data) : data;
   const ate = semana ? somarDias(de, 6) : data;
-  const [locacoes, turmas] = await Promise.all([
+  const [locacoes, turmas, pedidos] = await Promise.all([
     listarLocacoes({ de, ate, quadraId: semana ? quadraSel.id : undefined }),
     ocupacaoTurmas(de, ate),
+    contarPedidosPendentes(),
   ]);
   const ctx: Contexto = { locacoes, turmas, agoraMs: agora() };
 
@@ -225,6 +231,18 @@ export default async function LocacoesPage({ searchParams }: PageProps<"/admin/l
           </Link>
         }
       />
+
+      {pedidos > 0 && (
+        <Link
+          href="/admin/locacoes/reservas?status=solicitada"
+          className="mb-4 flex items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-sol-500 bg-sol-400/15 px-4 py-3 text-sm font-semibold text-verde-900 hover:bg-sol-400/25"
+        >
+          <span>
+            {pedidos === 1 ? "1 pedido de aluno aguardando" : `${pedidos} pedidos de alunos aguardando`} confirmação
+          </span>
+          <span aria-hidden>→</span>
+        </Link>
+      )}
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">

@@ -11,6 +11,7 @@ export default async function Layout({ children }: LayoutProps<"/aluno">) {
         { href: "/aluno", rotulo: "Início" },
         { href: "/aluno/agenda", rotulo: "Minha agenda" },
         { href: "/aluno/frequencia", rotulo: "Frequência" },
+        { href: "/aluno/quadras", rotulo: "Alugar quadra" },
         { href: "/aluno/plano", rotulo: "Plano e pagamentos" },
       ]}>
       {children}

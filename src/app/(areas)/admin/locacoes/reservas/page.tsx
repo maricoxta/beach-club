@@ -22,15 +22,16 @@ function Total({ rotulo, valor, destaque }: { rotulo: string; valor: number; des
 export default async function ReservasPage({ searchParams }: PageProps<"/admin/locacoes/reservas">) {
   const sp = await searchParams;
   const dia = hoje();
-  const de = isData(sp.de) ? sp.de : somarDias(dia, -7);
+  const de = isData(sp.de) ? sp.de : sp.status === "solicitada" ? dia : somarDias(dia, -7);
   const ate = isData(sp.ate) && sp.ate >= de ? sp.ate : somarDias(dia, 30);
   const pendentes = sp.pagamento === "pendente";
   const canceladas = sp.canceladas === "1";
+  const soPedidos = sp.status === "solicitada";
   const quadraId = typeof sp.quadra === "string" && sp.quadra ? sp.quadra : undefined;
 
   const [quadras, todas] = await Promise.all([
     listarQuadras(),
-    listarLocacoes({ de, ate, quadraId, incluirCanceladas: canceladas }),
+    listarLocacoes({ de, ate, quadraId, incluirCanceladas: canceladas, status: soPedidos ? "solicitada" : undefined }),
   ]);
   const lista = pendentes
     ? todas.filter((l) => l.status !== "cancelada" && (l.pagamento === "a_pagar" || l.pagamento === "parcial"))
@@ -72,6 +73,13 @@ export default async function ReservasPage({ searchParams }: PageProps<"/admin/l
           <select name="pagamento" defaultValue={pendentes ? "pendente" : ""} className={classeCampo}>
             <option value="">Todos</option>
             <option value="pendente">Só a receber</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          Status
+          <select name="status" defaultValue={soPedidos ? "solicitada" : ""} className={classeCampo}>
+            <option value="">Todos</option>
+            <option value="solicitada">Pedidos de alunos</option>
           </select>
         </label>
         <label className="flex items-center gap-2 pb-3">
@@ -131,6 +139,7 @@ export default async function ReservasPage({ searchParams }: PageProps<"/admin/l
                   <td className="px-4 py-3 text-right">{moeda(l.pago)}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
+                      {l.status === "solicitada" && <SeloStatusLocacao status={l.status} />}
                       {l.status === "cancelada" ? (
                         <SeloStatusLocacao status={l.status} />
                       ) : (

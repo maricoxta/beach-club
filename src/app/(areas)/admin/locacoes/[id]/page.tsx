@@ -48,6 +48,11 @@ export default async function LocacaoPage({ params, searchParams }: PageProps<"/
         }
       />
 
+      {loc.status === "solicitada" && (
+        <div className="mb-4 rounded-2xl border-2 border-dashed border-sol-500 bg-sol-400/15 px-4 py-3 text-sm font-semibold text-verde-900">
+          Pedido feito pelo aluno no app. Aprove para confirmar a reserva ou recuse para liberar o horário.
+        </div>
+      )}
       {sp.criada && (
         <div className="mb-4">
           <Alerta tipo="ok">Locação reservada.</Alerta>
@@ -101,9 +106,12 @@ export default async function LocacaoPage({ params, searchParams }: PageProps<"/
               <BotoesStatus
                 confirmar={mudarStatus.bind(null, loc.id, "confirmada")}
                 cancelar={mudarStatus.bind(null, loc.id, "cancelada")}
-                podeConfirmar={loc.status === "reservada" && !terminou}
+                podeConfirmar={(loc.status === "reservada" || loc.status === "solicitada") && !terminou}
+                pedido={loc.status === "solicitada"}
                 avisoCancelar={
-                  loc.pago > 0
+                  loc.status === "solicitada"
+                    ? "O pedido do aluno é recusado e o horário volta a ficar livre."
+                    : loc.pago > 0
                     ? `Já há ${moeda(loc.pago)} recebido. O cancelamento libera o horário; a devolução do dinheiro, se houver, é feita à parte.`
                     : "O horário volta a ficar livre na grade."
                 }

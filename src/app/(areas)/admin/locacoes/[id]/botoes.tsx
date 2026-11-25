@@ -12,11 +12,13 @@ export function BotoesStatus({
   cancelar,
   podeConfirmar,
   avisoCancelar,
+  pedido = false,
 }: {
   confirmar: AcaoSimples;
   cancelar: AcaoSimples;
   podeConfirmar: boolean;
   avisoCancelar?: string;
+  pedido?: boolean;
 }) {
   const [pendente, iniciar] = useTransition();
   const [estado, setEstado] = useState<EstadoAcao>();
@@ -28,13 +30,13 @@ export function BotoesStatus({
       <div className="flex flex-wrap gap-2">
         {podeConfirmar && (
           <button type="button" disabled={pendente} onClick={() => rodar(confirmar)} className={classeBotaoSecundario}>
-            Marcar como confirmada
+            {pedido ? "Aprovar pedido" : "Marcar como confirmada"}
           </button>
         )}
         {perguntando ? (
           <>
             <button type="button" disabled={pendente} onClick={() => rodar(cancelar)} className={classeBotaoPerigo}>
-              {pendente ? "Cancelando…" : "Sim, cancelar locação"}
+              {pendente ? "Salvando…" : pedido ? "Sim, recusar pedido" : "Sim, cancelar locação"}
             </button>
             <button type="button" disabled={pendente} onClick={() => setPerguntando(false)} className={classeBotaoSecundario}>
               Voltar
@@ -42,7 +44,7 @@ export function BotoesStatus({
           </>
         ) : (
           <button type="button" onClick={() => setPerguntando(true)} className={classeBotaoPerigo}>
-            Cancelar locação
+            {pedido ? "Recusar pedido" : "Cancelar locação"}
           </button>
         )}
       </div>

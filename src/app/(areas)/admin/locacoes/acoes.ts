@@ -111,5 +111,5 @@ export async function mudarStatus(id: string, status: "confirmada" | "cancelada"
   const { error } = await supabase.from("locacoes").update({ status }).eq("id", id);
   if (error) return { erro: erroLocacao(error) };
   revalidar(id);
-  return { ok: status === "cancelada" ? "Locação cancelada. O horário ficou livre." : "Locação confirmada." };
+  return { ok: status === "cancelada" ? "Cancelada. O horário ficou livre." : "Locação confirmada." };
 }
