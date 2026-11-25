@@ -39,6 +39,17 @@ async function chamarRpc(fn: string, aulaId: string, ok: string): Promise<Estado
   }
   revalidatePath("/aluno/agenda");
   revalidatePath("/aluno/reposicao");
-  revalidatePath("/aluno");
+  revalidatePath("/aluno/avisos");
+  revalidatePath("/aluno", "layout");
   return { ok };
+}
+
+// Chamado ao abrir /aluno/avisos: zera o contador do menu.
+export async function marcarAvisosLidos(): Promise<void> {
+  const { perfil } = await getSessao();
+  if (!perfil || perfil.papel !== "aluno") return;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("marcar_avisos_lidos");
+  if (error) console.error("[agenda] marcar_avisos_lidos:", error.code, error.message);
+  else revalidatePath("/aluno", "layout");
 }

@@ -7,6 +7,7 @@ export default function LayoutAgenda({ children }: { children: React.ReactNode }
         itens={[
           { href: "/admin/calendario", rotulo: "Calendário" },
           { href: "/admin/agenda", rotulo: "Agenda da semana" },
+          { href: "/admin/vagas", rotulo: "Vagas para reposição" },
           { href: "/admin/turmas", rotulo: "Turmas" },
           { href: "/admin/quadras", rotulo: "Quadras" },
           { href: "/admin/equipe", rotulo: "Professores e equipe" },

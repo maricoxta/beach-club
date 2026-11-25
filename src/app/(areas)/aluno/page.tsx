@@ -6,6 +6,7 @@ import { Vazio } from "@/components/agenda/ui";
 import { listarAulas, turmasDoAluno } from "@/lib/agenda/consultas";
 import { DIAS_SEMANA, diaSemanaIso, formatarData, hoje, somarDias } from "@/lib/agenda/datas";
 import { getSessao } from "@/lib/sessao";
+import { createClient } from "@/lib/supabase/server";
 
 // Lê a sessão (cookies) a cada request: a rota bloqueia no servidor em vez de ter shell estático.
 export const instant = false;
@@ -19,10 +20,27 @@ export default async function AlunoPage() {
   const aulas = turmaIds.length ? await listarAulas({ de: dia, ate: somarDias(dia, 14), turmaIds }) : [];
   const proximas = aulas.filter((a) => a.status !== "cancelada").slice(0, 3);
   const canceladas = aulas.filter((a) => a.status === "cancelada");
+  const supabase = await createClient();
+  const { data: naoLidos } = await supabase.rpc("contar_avisos_nao_lidos");
 
   return (
     <>
       <TituloArea ola={`E aí, ${perfil?.nome.split(" ")[0]}!`} subtitulo="Suas aulas, seu plano e seus pagamentos." />
+
+      {(naoLidos ?? 0) > 0 && (
+        <Link
+          href="/aluno/avisos"
+          className="mb-8 flex items-center justify-between gap-3 rounded-3xl border-2 border-sol-400 bg-sol-400/15 px-5 py-4 transition hover:bg-sol-400/25"
+        >
+          <span>
+            <span className="block font-display text-lg font-semibold text-verde-900">
+              {naoLidos === 1 ? "Nova vaga liberada para você!" : `${naoLidos} novas vagas liberadas para você!`}
+            </span>
+            <span className="text-sm text-tinta-suave">Turmas da sua modalidade e nível. Quem marcar primeiro fica com a vaga.</span>
+          </span>
+          <span className="shrink-0 rounded-full bg-verde-700 px-4 py-2 text-sm font-bold text-white">Ver vagas</span>
+        </Link>
+      )}
 
       <section className="mb-10">
         <div className="mb-3 flex items-end justify-between gap-2">

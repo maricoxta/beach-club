@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { FormChamada } from "@/components/agenda/form-chamada";
+import { PainelLiberacao, SeloLiberacao, type LinhaVagas } from "@/components/agenda/liberacao";
 import { Cartao, Etiqueta, LinkVoltar, SeloStatus } from "@/components/agenda/ui";
 import { salvarChamada } from "@/lib/agenda/acoes-chamada";
 import { buscarAula, listaChamada, opcoesCadastro, vagasLivresAula } from "@/lib/agenda/consultas";
-import { faixaHorario, formatarDataLonga, inicioDaSemana } from "@/lib/agenda/datas";
+import { agora, faixaHorario, formatarDataLonga, inicioDaSemana } from "@/lib/agenda/datas";
 import { createClient } from "@/lib/supabase/server";
-import { adicionarAvulso, atualizarAula } from "../../../acoes";
+import { adicionarAvulso, atualizarAula, liberarVagas } from "../../../acoes";
 import { FormAula, FormAvulso } from "./forms";
 
 export const instant = false;
@@ -18,12 +19,15 @@ export default async function AulaAdminPage({ params }: PageProps<"/admin/agenda
   if (!aula || !aula.turma) notFound();
 
   const supabase = await createClient();
-  const [lista, opcoes, alunos, vagasLivres] = await Promise.all([
+  const [lista, opcoes, alunos, vagasLivres, painel] = await Promise.all([
     listaChamada(id),
     opcoesCadastro(),
     supabase.from("perfis").select("id, nome").eq("papel", "aluno").eq("ativo", true).order("nome"),
     vagasLivresAula(id),
+    supabase.rpc("painel_vagas", { p_de: aula.data, p_ate: aula.data }),
   ]);
+  const liberacao = ((painel.data ?? []) as LinhaVagas[]).find((l) => l.aula_id === id) ?? null;
+  const agoraMs = agora();
   const desmarcados = lista.filter((i) => i.matriculado && i.observacao === "Desmarcada pelo aluno").length;
   const naLista = new Set(lista.map((i) => i.aluno_id));
   const avulsos = ((alunos.data ?? []) as { id: string; nome: string }[]).filter((a) => !naLista.has(a.id));
@@ -72,6 +76,15 @@ export default async function AulaAdminPage({ params }: PageProps<"/admin/agenda
               quadras={opcoes.quadras}
             />
           </Cartao>
+          {liberacao && (
+            <Cartao>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="font-display text-lg font-semibold text-verde-900">Vagas para reposição</h2>
+                <SeloLiberacao linha={liberacao} agoraMs={agoraMs} />
+              </div>
+              <PainelLiberacao linha={liberacao} agoraMs={agoraMs} acao={liberarVagas.bind(null, id)} />
+            </Cartao>
+          )}
           {aula.status !== "cancelada" && (
             <Cartao>
               <h2 className="mb-1 font-display text-lg font-semibold text-verde-900">Reposição ou aula avulsa</h2>
