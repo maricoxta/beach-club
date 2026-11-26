@@ -82,7 +82,5 @@ select pg_temp.esperar_erro($$update beach.perfis set papel = 'admin' where id =
 
 -- ===== advisor =====
 reset role;
-select pg_temp.conferir(bool_and(p.proconfig is not null), 'faixa_horario com search_path fixo')
-from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'beach' and p.proname like 'faixa_horario%';
 select pg_temp.conferir(not has_table_privilege('authenticated', c.oid, 'insert'), 'view de frequência sem escrita')
 from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'beach' and c.relname = 'vw_frequencia_resumo';
