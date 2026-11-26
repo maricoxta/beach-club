@@ -23,6 +23,7 @@ export default async function Layout({ children }: LayoutProps<"/aluno">) {
         { href: "/aluno/mensagens", rotulo: mensagensNovas ? `Mensagens (${mensagensNovas})` : "Mensagens" },
         { href: "/aluno/frequencia", rotulo: "Frequência" },
         { href: "/aluno/quadras", rotulo: "Alugar quadra" },
+        { href: "/aluno/parceiros", rotulo: "Parceiros" },
         { href: "/aluno/plano", rotulo: "Plano e pagamentos" },
       ]}>
       <OuvirMensagens alunoId={perfil.id} />

@@ -23,6 +23,7 @@ export default async function Layout({ children }: LayoutProps<"/admin">) {
         { href: "/admin/financeiro", rotulo: "Financeiro" },
         { href: "/admin/locacoes", rotulo: "Locação de quadras" },
         { href: "/admin/mensagens", rotulo: mensagensNovas ? `Mensagens (${mensagensNovas})` : "Mensagens" },
+        { href: "/admin/parceiros", rotulo: "Parceiros" },
       ]}>
       <OuvirMensagens />
       {children}
