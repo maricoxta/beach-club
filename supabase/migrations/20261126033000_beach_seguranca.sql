@@ -9,8 +9,7 @@
 -- 2. Contas de outros apps (o auth.users é compartilhado) não leem nada do clube:
 --    catálogo, chave Pix, professores e ocupação exigem perfil ativo no beach.
 -- 3. Só admin dá ou tira o papel de recepção (recepção = acesso total ao clube).
--- 4. Ajustes do advisor: search_path fixo nas funções do range faixa_horario e
---    view de frequência sem permissão de escrita.
+-- 4. View de frequência sem permissão de escrita.
 -- =============================================================================
 
 -- ---------------------------------------------------------------- 1. avaliações anônimas
@@ -202,11 +201,9 @@ end;
 $$;
 
 -- ---------------------------------------------------------------- 4. advisor
-alter function beach.faixa_horario(time, time) set search_path = '';
-alter function beach.faixa_horario(time, time, text) set search_path = '';
-alter function beach.faixa_horario_multirange() set search_path = '';
-alter function beach.faixa_horario_multirange(beach.faixa_horario) set search_path = '';
-alter function beach.faixa_horario_multirange(variadic beach.faixa_horario[]) set search_path = '';
+-- As funções do range faixa_horario (aviso do advisor) pertencem a supabase_admin e não
+-- podem ser alteradas pelo SQL Editor. São construtores internos do tipo, sem código SQL,
+-- então o search_path não abre brecha: o aviso pode ser ignorado.
 
 revoke insert, update, delete on beach.vw_frequencia_resumo from authenticated;
 
