@@ -53,5 +53,5 @@ export async function cadastrar(_: EstadoForm, form: FormData): Promise<EstadoFo
   if (error) return { erro: error.message };
 
   if (data.session) redirect("/");
-  return { aviso: "Conta criada! Enviamos um link de confirmação para o seu e-mail." };
+  return { aviso: "Conta criada! Confirme pelo link que enviamos ao seu e-mail. Depois disso, a recepção libera o seu acesso." };
 }

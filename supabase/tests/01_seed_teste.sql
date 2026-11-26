@@ -10,6 +10,8 @@ insert into auth.users (id,email,raw_user_meta_data) values
  ('00000000-0000-0000-0000-0000000000a2','al2@x','{"app":"beach-club"}'),
  ('00000000-0000-0000-0000-0000000000ff','outro@x','{}');
 select count(*) as perfis_criados from beach.perfis;  -- esperado 6 (outro app não cria)
+-- cadastro pelo site nasce inativo (aguarda a recepção); aqui ativamos todos
+update beach.perfis set ativo = true;
 update beach.perfis set papel='admin' where email='admin@x';
 update beach.perfis set papel='recepcao' where email='rec@x';
 update beach.perfis set papel='professor' where email like 'prof%';

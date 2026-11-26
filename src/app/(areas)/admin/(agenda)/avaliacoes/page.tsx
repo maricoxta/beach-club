@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CartoesResumo, Estrelas, ListaAvaliacoes, SELECT_AVALIACAO_AULA, type AvaliacaoAula, type ResumoProfessor } from "@/components/agenda/avaliacoes";
+import { CartoesResumo, Estrelas, ListaAvaliacoes, REGRA_ANONIMATO, type AvaliacaoAula, type ResumoProfessor } from "@/components/agenda/avaliacoes";
 import { Cabecalho, Cartao, Vazio } from "@/components/agenda/ui";
 import { formatarData } from "@/lib/agenda/datas";
 import { createClient } from "@/lib/supabase/server";
@@ -24,7 +24,7 @@ export default async function AvaliacoesAdminPage() {
   const supabase = await createClient();
   const [resumoRes, itensRes, niveisRes] = await Promise.all([
     supabase.rpc("resumo_avaliacoes"),
-    supabase.from("avaliacoes_aula").select(SELECT_AVALIACAO_AULA).limit(200),
+    supabase.rpc("avaliacoes_liberadas").limit(300),
     supabase
       .from("avaliacoes_aluno")
       .select(
@@ -53,6 +53,7 @@ export default async function AvaliacoesAdminPage() {
         <h2 className="mb-3 font-display text-xl font-semibold text-verde-900">Aulas, por professor</h2>
         <div className="mb-4">
           <CartoesResumo resumo={(resumoRes.data ?? []) as ResumoProfessor[]} />
+          <p className="mt-2 text-xs text-tinta-suave">{REGRA_ANONIMATO}</p>
         </div>
         <ListaAvaliacoes itens={(itensRes.data ?? []) as unknown as AvaliacaoAula[]} mostrarProfessor />
       </section>

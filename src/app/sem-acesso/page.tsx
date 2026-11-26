@@ -20,7 +20,7 @@ export default async function SemAcessoPage() {
       <h1 className="font-display text-3xl font-semibold text-verde-900">Seu acesso ainda não foi liberado</h1>
       <p className="max-w-md text-tinta-suave">
         {perfil
-          ? "Seu cadastro está inativo. Fale com a recepção do clube para reativá-lo."
+          ? "Seu cadastro está aguardando a liberação da recepção. Assim que for aprovado, é só entrar de novo. Se já faz tempo, fale com o clube."
           : `A conta ${user.email} não tem cadastro no clube. Fale com a recepção para liberar seu acesso.`}
       </p>
       <form action="/auth/sair" method="post">

@@ -81,12 +81,13 @@ select pg_temp.esperar_erro(format('select beach.avaliar_aula(%L, 5)', :'fut'), 
 select beach.avaliar_aula(:'passada', 5, 'Aula ótima');
 select pg_temp.esperar_erro(format('select beach.avaliar_aula(%L, 4)', :'passada'), 'avaliar 2x');
 select pg_temp.conferir(count(*) = 0, 'aula avaliada sai da lista') from beach.aulas_para_avaliar() where aula_id = :'passada';
-select pg_temp.conferir(count(*) = 0, 'aluno não lê as notas') from beach.avaliacoes_aula;
+select pg_temp.esperar_erro('select count(*) from beach.avaliacoes_aula', 'aluno não lê as notas');
 set request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a2","role":"authenticated"}';
 select pg_temp.esperar_erro(format('select beach.avaliar_aula(%L, 1)', :'passada'), 'aluno de outra turma avalia');
 select set_config('request.jwt.claims', json_build_object('sub', :'prof', 'role', 'authenticated')::text, false) is not null as prof_on;
-select pg_temp.conferir(nota = 5 and comentario = 'Aula ótima', 'professor vê a nota') from beach.avaliacoes_aula where aula_id = :'passada';
-select pg_temp.conferir(avaliacoes = 1 and media = 5, 'resumo do professor') from beach.resumo_avaliacoes();
+select pg_temp.esperar_erro('select count(*) from beach.avaliacoes_aula', 'professor não lê a tabela de notas (anonimato)');
+select pg_temp.conferir(count(*) = 0, 'nota do mês corrente ainda não liberada') from beach.avaliacoes_liberadas();
+select pg_temp.conferir(count(*) = 0, 'resumo só com meses liberados') from beach.resumo_avaliacoes();
 select pg_temp.conferir(count(*) = 0, 'professor não vê quem avaliou') from beach.avaliacoes_aula_feitas;
 set request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000e","role":"authenticated"}';
-select pg_temp.conferir(count(*) >= 1, 'recepção vê resumo') from beach.resumo_avaliacoes();
+select pg_temp.conferir(count(*) = 0, 'recepção também só vê meses liberados') from beach.resumo_avaliacoes();

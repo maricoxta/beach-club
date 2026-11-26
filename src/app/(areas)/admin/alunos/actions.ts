@@ -43,7 +43,11 @@ export async function cadastrarAluno(_: EstadoAcao, form: FormData): Promise<Est
         "Peça para o aluno criar a conta pelo site com outro e-mail.",
     };
   }
-  if (nascimento) await supabase.from("perfis").update({ data_nascimento: nascimento }).eq("id", perfil.id);
+  // Conta criada pelo site nasce inativa (aguarda aprovação); quem a recepção cadastra já entra ativo.
+  await supabase
+    .from("perfis")
+    .update(nascimento ? { ativo: true, data_nascimento: nascimento } : { ativo: true })
+    .eq("id", perfil.id);
 
   redirect(`/admin/alunos/${perfil.id}?novo=1`);
 }

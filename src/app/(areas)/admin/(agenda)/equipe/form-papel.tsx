@@ -26,7 +26,7 @@ export function FormPapel({
         defaultValue={papel}
         className="rounded-full border-2 border-areia-200 bg-white px-3 py-1.5 outline-none focus:border-verde-600"
       >
-        {PAPEIS.filter((p) => p !== "admin" || podeAdmin).map((p) => (
+        {PAPEIS.filter((p) => podeAdmin || (p !== "admin" && p !== "recepcao")).map((p) => (
           <option key={p} value={p}>
             {rotuloPapel[p]}
           </option>

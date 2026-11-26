@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: "Alunos" };
 
 const FILTROS = {
   ativos: "Ativos",
+  aguardando: "Aguardando aprovação",
   sem_plano: "Sem plano ativo",
   inativos: "Inativos",
   todos: "Todos",
@@ -36,19 +37,29 @@ export default async function AlunosPage({ searchParams }: PageProps<"/admin/alu
     .eq("papel", "aluno")
     .order("nome")
     .limit(300);
-  if (filtro === "inativos") consulta = consulta.eq("ativo", false);
+  if (filtro === "inativos" || filtro === "aguardando") consulta = consulta.eq("ativo", false);
   else if (filtro !== "todos") consulta = consulta.eq("ativo", true);
   // Remove caracteres que têm significado na sintaxe de filtros do PostgREST.
   const termo = busca.replace(/[,()%*\\]/g, " ").trim();
   if (termo) consulta = consulta.or(`nome.ilike.%${termo}%,email.ilike.%${termo}%,telefone.ilike.%${termo}%`);
 
-  const [{ data: perfis }, { data: matriculas }] = await Promise.all([
+  const [{ data: perfis }, { data: matriculas }, { data: inativos }] = await Promise.all([
     consulta,
     supabase
       .from("matriculas")
       .select("aluno_id, status, planos(nome, aulas_por_semana), matricula_turmas(turma_id)")
       .in("status", ["ativa", "pausada"]),
+    supabase.from("perfis").select("id").eq("papel", "aluno").eq("ativo", false).limit(1000),
   ]);
+
+  // Cadastro feito pelo site nasce inativo: "aguardando" = inativo que nunca teve matrícula.
+  const idsInativos = (inativos ?? []).map((p) => p.id as string);
+  const comMatricula = new Set<string>();
+  if (idsInativos.length > 0) {
+    const { data } = await supabase.from("matriculas").select("aluno_id").in("aluno_id", idsInativos);
+    for (const m of data ?? []) comMatricula.add(m.aluno_id as string);
+  }
+  const aguardando = new Set(idsInativos.filter((id) => !comMatricula.has(id)));
 
   const porAluno = new Map<string, MatriculaResumo[]>();
   for (const m of (matriculas ?? []) as unknown as MatriculaResumo[]) {
@@ -56,6 +67,7 @@ export default async function AlunosPage({ searchParams }: PageProps<"/admin/alu
   }
   let alunos = (perfis ?? []) as Aluno[];
   if (filtro === "sem_plano") alunos = alunos.filter((a) => !porAluno.get(a.id)?.some((m) => m.status === "ativa"));
+  if (filtro === "aguardando") alunos = alunos.filter((a) => aguardando.has(a.id));
 
   // Busca sem resultado: avisa se o nome é de alguém da equipe (cada conta tem um papel só).
   let equipe: { nome: string; papel: Papel }[] = [];
@@ -81,6 +93,16 @@ export default async function AlunosPage({ searchParams }: PageProps<"/admin/alu
         </Link>
       </div>
 
+      {aguardando.size > 0 && filtro !== "aguardando" && (
+        <Link
+          href="/admin/alunos?filtro=aguardando"
+          className="mb-4 block rounded-2xl border-2 border-sol-400 bg-areia-50 px-4 py-3 text-sm font-semibold text-verde-900 hover:border-sol-500"
+        >
+          {aguardando.size === 1 ? "1 cadastro feito pelo site aguarda" : `${aguardando.size} cadastros feitos pelo site aguardam`} aprovação.
+          Abra o aluno e marque “Ativo” para liberar o acesso.
+        </Link>
+      )}
+
       <form className="mb-4 flex flex-wrap gap-3" role="search">
         <input
           name="q"
@@ -104,7 +126,7 @@ export default async function AlunosPage({ searchParams }: PageProps<"/admin/alu
         <Vazio>
           {busca || filtro !== "ativos"
             ? "Nenhum aluno encontrado com esses filtros."
-            : "Nenhum aluno cadastrado ainda. Alunos que criam conta pelo site aparecem aqui automaticamente."}
+            : "Nenhum aluno cadastrado ainda. Quem cria conta pelo site aparece em “Aguardando aprovação”."}
           {equipe.length > 0 && (
             <span className="mt-2 block">
               {equipe.map((p) => `${p.nome} (${rotuloPapel[p.papel]})`).join(", ")}{" "}
