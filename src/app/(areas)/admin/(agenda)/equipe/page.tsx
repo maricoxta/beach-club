@@ -28,7 +28,7 @@ export default async function EquipePage({ searchParams }: PageProps<"/admin/equ
     <>
       <Cabecalho
         titulo="Professores e equipe"
-        subtitulo="Quem se cadastra pelo site entra como aluno. Busque a pessoa e mude o papel para professor, recepção ou admin."
+        subtitulo="Quem se cadastra pelo site entra como aluno e fica inativo até ser aprovado. Busque a pessoa, marque Ativo e mude o papel. Só o admin dá acesso de recepção ou admin."
       />
       <form className="mb-4 flex max-w-xl gap-2">
         <input
@@ -54,7 +54,7 @@ export default async function EquipePage({ searchParams }: PageProps<"/admin/equ
                   acao={alterarPapel.bind(null, p.id)}
                   papel={p.papel}
                   ativo={p.ativo}
-                  bloqueado={p.id === eu?.id || (p.papel === "admin" && eu?.papel !== "admin")}
+                  bloqueado={p.id === eu?.id || ((p.papel === "admin" || p.papel === "recepcao") && eu?.papel !== "admin")}
                   podeAdmin={eu?.papel === "admin"}
                 />
               </li>

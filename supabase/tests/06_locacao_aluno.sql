@@ -6,6 +6,7 @@ exception when others then return 'ok erro esperado: '||rotulo||' -> '||sqlerrm;
 create or replace function pg_temp.esperar(obtido bigint, esperado bigint, rotulo text) returns text language sql as $f$
   select case when obtido = esperado then 'ok: ' else 'FALHOU: ' end || rotulo || ' (' || obtido || ')' $f$;
 set role authenticated;
+set request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}';
 select id as q1 from beach.quadras where nome = 'Quadra 1' \gset
 select (current_date + 5) as dia \gset
 -- aluno 1 pede 2h às 20h
