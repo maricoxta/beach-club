@@ -12,6 +12,8 @@ O schema `public` (que tem tabelas de outros projetos) não é tocado.
 | `20261124203240_beach_financeiro.sql` | `mensalidades`, `pagamentos`, `locacoes`, `gerar_mensalidades()`, views de relatório |
 | `20261124203321_beach_rls.sql` | trigger de signup, proteção de papel, grants e políticas RLS |
 | `20261124203329_beach_dados_iniciais.sql` | modalidades e níveis iniciais |
+| `20261127180000_beach_perfis_protegidos.sql` | lista `perfis_protegidos`: perfis que só a própria pessoa altera/apaga (protege a conta da dona contra admins de demo) |
+| `20261127190000_beach_demo_reset.sql` | reset do ambiente de demo: `demo_tirar_foto()` grava o schema em `beach_demo`, `demo_restaurar([senha])` volta tudo para a foto (só para dados de teste) |
 
 ## Modelo
 
